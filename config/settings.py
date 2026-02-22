@@ -98,8 +98,10 @@ DATABASES = {
         "NAME":     os.environ.get("POSTGRES_DB",           "reddit"),
         "USER":     os.environ.get("POSTGRES_USER",         "reddit"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD",     "reddit"),
-        "HOST":     os.environ.get("POSTGRES_REPLICA_HOST", "localhost"),  
-        "PORT":     os.environ.get("POSTGRES_REPLICA_PORT", "5434"),       
+        #"HOST":     os.environ.get("POSTGRES_REPLICA_HOST", "localhost"),
+        #"PORT":     os.environ.get("POSTGRES_REPLICA_PORT", "5434"),
+        "HOST":     os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT":     os.environ.get("POSTGRES_PORT", "5433"),
         "CONN_MAX_AGE": 600,
     },
 }

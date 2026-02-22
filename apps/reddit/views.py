@@ -103,7 +103,7 @@ class PostViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             page_size = min(int(self.request.query_params.get("page_size", 100)), 200)
         except ValueError:
-            page_size = 100
+            page_size = 500
 
         return qs[:page_size]
 

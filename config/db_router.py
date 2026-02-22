@@ -32,11 +32,31 @@ Impact:
 # behind causes "auth_user does not exist" on the replica.
 REPLICA_EXCLUDED_APPS = {"auth", "admin", "contenttypes", "sessions"}
 
+
+#============================
+#Postgres_replica
+#============================
+
+# class ReadReplicaRouter:
+#     def db_for_read(self, model, **hints):
+#         if model._meta.app_label in REPLICA_EXCLUDED_APPS:
+#             return "default"
+#         return "replica"
+#
+#     def db_for_write(self, model, **hints):
+#         return "default"
+#
+#     def allow_relation(self, obj1, obj2, **hints):
+#         return True
+#
+#     def allow_migrate(self, db, app_label, **hints):
+#         # Migrations only run on the primary
+#         return db == "default"
+
+
 class ReadReplicaRouter:
     def db_for_read(self, model, **hints):
-        if model._meta.app_label in REPLICA_EXCLUDED_APPS:
-            return "default"
-        return "replica"
+        return "default"       # always primary
 
     def db_for_write(self, model, **hints):
         return "default"
@@ -45,5 +65,4 @@ class ReadReplicaRouter:
         return True
 
     def allow_migrate(self, db, app_label, **hints):
-        # Migrations only run on the primary
-        return db == "default"
+        return db == "default
