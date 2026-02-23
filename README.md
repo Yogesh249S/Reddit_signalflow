@@ -25,7 +25,7 @@ touch .env
 
 Go to [reddit.com/prefs/apps](https://reddit.com/prefs/apps), click **"create another app"**, and fill in the form as shown below. Select **"web app"** as the type, set the redirect URI to `http://localhost:8080`, then copy the two values into your `.env`.
 
-![Reddit app setup — annotated](assets/reddit_app_annotated.png)
+![Reddit app setup — annotated](reddit_producer/assets/reddit_app_annotated.png)
 
 - **③ `REDDIT_CLIENT_ID`** — the short string directly below the app type line
 - **④ `REDDIT_CLIENT_SECRET`** — shown next to the "secret" label. Never commit this value — keep it in `.env` only and ensure `.env` is in `.gitignore`
@@ -286,7 +286,7 @@ inactive      post > 24 h       not refreshed
 
 **Burst management under load** — During a 12-hour stress test across 120 subreddits, refresh cycles caused periodic bursts peaking at 25 req/s — the Reddit API rate limit ceiling. Rather than throttling at the ingestion layer, the asyncio task scheduler naturally staggers these bursts: sustained throughput between cycles holds at 2–3 req/s, well inside the 60 req/min cap. Batch flush P99 latency settled from ~130ms at startup to a stable ~70ms after warm-up and held there overnight. The 50 DLQ messages visible in the dashboard are the expected one-time flush from inserting the initial `subreddits.sql` seed — the counter was static throughout the run, confirming zero ongoing data loss.
 
-![12-hour stress test — Messages/sec, Batch Flush Latency P50/P95/P99, Batch Outcomes, DLQ rate](assets/graphana_stress_graph.png)
+![12-hour stress test — Messages/sec, Batch Flush Latency P50/P95/P99, Batch Outcomes, DLQ rate](reddit_producer/assets/graphana_stress_graph.png)
 
 *Burst spikes to 25 req/s at refresh cycles, P99 latency stabilising at ~70ms, sustained ok batch rate with negligible errors, DLQ flat at 50 after initial seed flush.*
 
