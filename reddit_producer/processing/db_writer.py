@@ -162,6 +162,10 @@ def bulk_upsert_posts(posts: list[dict]) -> None:
                     post["num_comments"],
                     post["upvote_ratio"],
                     post.get("poll_priority"),
+                    post.get("score_velocity"),    # None for raw posts, computed for refresh
+                    post.get("comment_velocity"),
+                    post.get("trending_score"),
+                    post.get("is_trending"),
                 ))
 
             # Single multi-row statement for the entire batch
@@ -171,7 +175,8 @@ def bulk_upsert_posts(posts: list[dict]) -> None:
                 INSERT INTO posts (
                     id, subreddit_id, title, author, created_utc,
                     current_score, current_comments, current_ratio,
-                    poll_priority, is_active
+                    poll_priority, is_active,
+                    score_velocity, comment_velocity, trending_score, is_trending
                 )
                 VALUES %s
                 ON CONFLICT (id) DO UPDATE SET
@@ -179,11 +184,14 @@ def bulk_upsert_posts(posts: list[dict]) -> None:
                     current_comments = EXCLUDED.current_comments,
                     current_ratio    = EXCLUDED.current_ratio,
                     poll_priority    = EXCLUDED.poll_priority,
-                    last_polled_at   = NOW()
+                    last_polled_at   = NOW(),
+                    score_velocity   = COALESCE(EXCLUDED.score_velocity,   posts.score_velocity),
+                    comment_velocity = COALESCE(EXCLUDED.comment_velocity, posts.comment_velocity),
+                    trending_score   = COALESCE(EXCLUDED.trending_score,   posts.trending_score),
+                    is_trending      = COALESCE(EXCLUDED.is_trending,      posts.is_trending)
                 """,
-                # Use a template to apply to_timestamp() on the epoch float
                 rows,
-                template="(%s,%s,%s,%s,to_timestamp(%s),%s,%s,%s,%s,TRUE)",
+                template="(%s,%s,%s,%s,to_timestamp(%s),%s,%s,%s,%s,TRUE,%s,%s,%s,%s)",
             )
 
         conn.commit()

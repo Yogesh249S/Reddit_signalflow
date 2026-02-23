@@ -168,11 +168,17 @@ def flush_batches(
             logger.info("[RAW  ] Flushed batch of %d posts to DB.", len(raw_batch))
 
         if refresh_batch:
-            # Velocity and trending are still computed per-post (stateful)
+            # Compute velocity and trending, write results back into each post dict
             for post in refresh_batch:
                 score_velocity, comment_velocity = calculate_velocity(post)
                 sentiment_score, _ = _get_sentiment(post)
-                compute_trending(post, score_velocity, sentiment_score)   # side-effect free
+                trending_score, is_trending = compute_trending(post, score_velocity, sentiment_score)
+
+                # Write computed values back so bulk_upsert_posts can persist them
+                post["score_velocity"]   = score_velocity
+                post["comment_velocity"] = comment_velocity
+                post["trending_score"]   = trending_score
+                post["is_trending"]      = is_trending
 
             # Two bulk statements cover the entire refresh batch
             bulk_upsert_posts(refresh_batch)
