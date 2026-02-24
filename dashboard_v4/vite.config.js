@@ -5,9 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://django:8080',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://django:8080',
+        ws: true,
         changeOrigin: true,
       }
     }

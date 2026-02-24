@@ -47,7 +47,6 @@ services:
       KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      # Reduce memory footprint for t2.micro
       KAFKA_HEAP_OPTS: "-Xmx256m -Xms128m"
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
@@ -238,6 +237,21 @@ services:
         limits:
           memory: 256m
 
+  dashboard:
+    build:
+      context: ../../dashboard_v4
+      dockerfile: Dockerfile.dashboard
+    container_name: reddit_dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      - django
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: prometheus
@@ -263,7 +277,7 @@ services:
     image: grafana/grafana:10.1.0
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"

@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "http://localhost:8080/api" });
+// In Docker the Vite proxy handles /api → django:8080
+// In local dev outside Docker it hits localhost:8080 directly
+const api = axios.create({ baseURL: "/api" });
 
 export const setAuthToken = (token) => {
   if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
