@@ -41,8 +41,16 @@ A post appears on r/technology. Within seconds:
 5. Grafana reads pre-aggregated Postgres views — topic traction timeline, lead/lag heatmap, trending 24h, platform leaderboard
 
 
-> **Interactive architecture diagram** → [Open in browser](https://yogesh249s.github.io/Reddit_signalflow/signal_flow_architecture.html)  
-> *Traces a single post through every layer of the pipeline*
+
+
+## 📐 Architecture
+
+> **This system is best understood visually.**
+> 
+> ### 👉 [Open Interactive Architecture Diagram](https://yogesh249s.github.io/Reddit_signalflow/signal_flow_architecture.html)
+> 
+> *Traces a single Reddit post through every layer — Kafka partitioning, dual-path processing, NLP enrichment, TimescaleDB writes, WebSocket push, and Grafana. Click a step to expand it.*
+
 ---
 
 ## API
