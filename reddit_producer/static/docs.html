@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalFlow — API Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;--bg2:#0c0c12;--bg3:#12121a;--bg4:#1a1a24;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);
+  --text:#f0f0f5;--sub:#a0a0b0;--dim:#606075;
+  --accent:#00d4ff;--accent2:#00e5ff;--accent3:rgba(0,212,255,0.12);--accent-glow:rgba(0,212,255,0.25);
+  --green:#00ff88;--red:#ff4466;--blue:#4488ff;--cyan:#00e5ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:56px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 32px;
+  background:rgba(5,5,8,0.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border)}
+.nav-logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;text-shadow:0 0 20px var(--accent-glow)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-back{font-family:var(--mono);font-size:11px;color:var(--sub);transition:color .15s;letter-spacing:.06em}
+.nav-back:hover{color:var(--text);text-decoration:none}
+.live-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:4px 12px;border-radius:20px;background:rgba(0,255,136,0.08)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 56px)}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:28px 0;
+  position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;background:var(--bg)}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
+.sb-section{margin-bottom:28px}
+.sb-label{font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--dim);padding:0 24px;margin-bottom:10px;display:block}
+.sb-link{display:block;padding:7px 24px;font-size:12px;color:var(--sub);
+  transition:all .15s;border-left:2px solid transparent}
+.sb-link:hover{color:var(--text);text-decoration:none;background:rgba(0,212,255,.04)}
+.sb-link.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent3)}
+
+/* CONTENT */
+.content{padding:52px 56px;max-width:920px}
+.content h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.02em}
+.content h1 span{background:linear-gradient(135deg,var(--accent) 0%,var(--green) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.content h2{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--accent);
+  margin:48px 0 18px;padding-bottom:12px;border-bottom:1px solid var(--border);
+  letter-spacing:.06em;text-transform:uppercase}
+.content h3{font-family:var(--mono);font-size:11px;font-weight:500;
+  color:var(--sub);margin:24px 0 12px;letter-spacing:.12em;text-transform:uppercase}
+.content p{color:var(--sub);line-height:1.85;margin-bottom:16px}
+.content p b{color:var(--text);font-weight:500}
+
+/* SECTION RULE (matches index) */
+.section-rule{height:1px;background:linear-gradient(90deg,var(--accent3),var(--border),transparent);margin-bottom:24px}
+
+/* ENDPOINT BADGE */
+.ep-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.method{font-family:var(--mono);font-size:10px;font-weight:600;padding:4px 12px;
+  border-radius:4px;background:rgba(0,255,136,.1);color:var(--green);
+  border:1px solid rgba(0,255,136,.25);letter-spacing:.04em}
+.ep-url{font-family:var(--mono);font-size:13px;color:#fff}
+.ep-desc{font-size:14px;color:var(--sub);margin-bottom:18px;line-height:1.75}
+
+/* CODE BLOCKS */
+.code-wrap{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin:14px 0 22px}
+.code-bar{height:36px;background:var(--bg3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.code-lang{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub)}
+.copy-btn{font-family:var(--mono);font-size:9px;color:var(--dim);
+  background:none;border:none;cursor:pointer;padding:4px 8px;
+  border-radius:3px;transition:color .15s;letter-spacing:.06em}
+.copy-btn:hover{color:var(--accent)}
+.code-body{padding:18px 20px;font-family:var(--mono);font-size:12px;
+  line-height:1.9;overflow-x:auto;white-space:pre}
+.t-k{color:#79b8ff}.t-s{color:#a3e635}.t-n{color:#fb923c}
+.t-b{color:var(--blue)}.t-c{color:var(--dim);font-style:italic}
+.t-kw{color:var(--cyan)}.t-fn{color:#e8c76a}
+
+/* PARAMS TABLE */
+.params-table{width:100%;border-collapse:collapse;margin:14px 0 22px;font-size:13px}
+.params-table th{text-align:left;font-family:var(--mono);font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--dim);
+  padding:10px 14px;border-bottom:1px solid var(--border2)}
+.params-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.params-table td:first-child{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.params-table td:nth-child(2){font-family:var(--mono);font-size:11px;color:var(--text)}
+.params-table td:nth-child(3){color:var(--sub)}
+.required{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;
+  background:rgba(255,68,102,.08);color:var(--red);border:1px solid rgba(255,68,102,.2)}
+.optional{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;
+  background:rgba(0,255,136,.06);color:var(--green);border:1px solid rgba(0,255,136,.15)}
+
+/* CALLOUT */
+.callout{padding:16px 20px;border-radius:8px;margin:18px 0;font-size:13px;line-height:1.75}
+.callout.info{background:rgba(68,136,255,.06);border:1px solid rgba(68,136,255,.2);color:var(--text)}
+.callout.warn{background:rgba(255,180,0,.06);border:1px solid rgba(255,180,0,.2);color:var(--text)}
+.callout.tip{background:var(--accent3);border:1px solid rgba(0,212,255,.25);color:var(--text)}
+.callout-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;margin-bottom:6px}
+.callout.info .callout-label{color:var(--blue)}
+.callout.warn .callout-label{color:#ffab00}
+.callout.tip .callout-label{color:var(--accent)}
+
+/* RESPONSE FIELD */
+.resp-field{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.resp-field:last-child{border-bottom:none}
+.rf-name{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:220px;flex-shrink:0}
+.rf-type{font-family:var(--mono);font-size:10px;color:var(--blue);min-width:64px;flex-shrink:0}
+.rf-desc{color:var(--sub)}
+
+/* LANG TABS */
+.lang-tabs{display:flex;gap:4px;margin-bottom:-1px}
+.lang-tab{font-family:var(--mono);font-size:10px;padding:6px 16px;
+  border:1px solid var(--border);border-bottom:none;border-radius:4px 4px 0 0;
+  color:var(--sub);cursor:pointer;background:var(--bg3);transition:all .15s;letter-spacing:.04em}
+.lang-tab:hover{color:var(--text)}
+.lang-tab.active{background:var(--bg2);border-color:var(--border2);color:var(--accent)}
+.lang-content{display:none}
+.lang-content.active{display:block}
+
+/* RESP BLOCK */
+.resp-block{border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:22px;background:var(--bg2)}
+
+/* FOOTER */
+.docs-footer{padding:36px 56px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.docs-footer-note{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.docs-footer-note a{color:var(--sub)}
+.docs-footer-note a:hover{color:var(--accent)}
+
+@media(max-width:800px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .content{padding:28px 24px}
+  .docs-footer{flex-direction:column;gap:12px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">SignalFlow / Docs</div>
+  <div class="nav-right">
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <a href="/" class="nav-back">← signalflo.xyz</a>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <span class="sb-label">Getting Started</span>
+      <a href="#intro" class="sb-link active">Introduction</a>
+      <a href="#auth" class="sb-link">Authentication</a>
+      <a href="#quickstart" class="sb-link">Quick Start</a>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Endpoints</span>
+      <a href="#trending" class="sb-link">/trending/</a>
+      <a href="#pulse" class="sb-link">/pulse/</a>
+      <a href="#signals" class="sb-link">/signals/</a>
+      <a href="#compare" class="sb-link">/compare/</a>
+      <a href="#stats" class="sb-link">/stats/</a>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Reference</span>
+      <a href="#intelligence" class="sb-link">Intelligence Block</a>
+      <a href="#errors" class="sb-link">Errors</a>
+      </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <section id="intro">
+      <h1>SignalFlow <span>API</span></h1>
+      <p>Real-time cross-platform signal intelligence across Reddit, HackerNews, Bluesky and YouTube. The API surfaces trending topics, sentiment, velocity and LLM-generated intelligence — automatically.</p>
+      <div class="callout tip">
+        <div class="callout-label">Base URL</div>
+        <code style="font-family:var(--mono);color:var(--cyan)">https://signalflo.xyz/api/v1/</code>
+      </div>
+
+    </section>
+
+    <section id="auth">
+      <h2>Authentication</h2>
+      <div class="section-rule"></div>
+      <p>All endpoints require an API key. Get yours at <a href="/">signalflo.xyz</a> — click "Get API Key". Pass your key as a Token in the Authorization header.</p>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">http header</span></div>
+        <div class="code-body"><span class="t-k">Authorization</span>: Token <span class="t-s">your_api_key_here</span></div>
+      </div>
+      <p>Get your key at <a href="/">signalflo.xyz</a> — click "Get API Key". Same email always returns the same key.</p>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quick Start</h2>
+      <div class="section-rule"></div>
+      <p>Get trending topics with intelligence in under a minute.</p>
+
+      <div class="lang-tabs">
+        <div class="lang-tab active" onclick="setLang('curl',this)">cURL</div>
+        <div class="lang-tab" onclick="setLang('python',this)">Python</div>
+        <div class="lang-tab" onclick="setLang('js',this)">JavaScript</div>
+        <div class="lang-tab" onclick="setLang('node',this)">Node.js</div>
+      </div>
+
+      <div id="lang-curl" class="lang-content active">
+        <div class="code-wrap" style="border-radius:0 8px 8px 8px;margin-top:0">
+          <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('curl-qs')">copy</button></div>
+          <div class="code-body" id="curl-qs"><span class="t-c"># get trending topics</span>
+TOKEN="your_token_here"
+curl "https://signalflo.xyz/api/v1/trending/?window=60&limit=10" \
+  -H "Authorization: Token $TOKEN"
+
+<span class="t-c"># topic intelligence</span>
+curl "https://signalflo.xyz/api/v1/pulse/?topic=iran" \
+  -H "Authorization: Token $TOKEN"</div>
+        </div>
+      </div>
+
+      <div id="lang-python" class="lang-content">
+        <div class="code-wrap" style="border-radius:0 8px 8px 8px;margin-top:0">
+          <div class="code-bar"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode('python-qs')">copy</button></div>
+          <div class="code-body" id="python-qs"><span class="t-kw">import</span> requests
+
+BASE    = <span class="t-s">"https://signalflo.xyz/api/v1"</span>
+TOKEN   = <span class="t-s">"your_token_here"</span>
+HEADERS = {<span class="t-s">"Authorization"</span>: <span class="t-s">f"Token {TOKEN}"</span>}
+
+<span class="t-c"># trending topics</span>
+data = requests.get(
+    <span class="t-s">f"{BASE}/trending/"</span>,
+    params={<span class="t-s">"window"</span>: <span class="t-n">60</span>, <span class="t-s">"limit"</span>: <span class="t-n">10</span>},
+    headers=HEADERS
+).json()
+
+<span class="t-kw">for</span> t <span class="t-kw">in</span> data[<span class="t-s">"topics"</span>]:
+    print(t[<span class="t-s">"topic"</span>], t[<span class="t-s">"trend_score"</span>])
+
+<span class="t-c"># topic intelligence</span>
+pulse = requests.get(
+    <span class="t-s">f"{BASE}/pulse/"</span>,
+    params={<span class="t-s">"topic"</span>: <span class="t-s">"iran"</span>},
+    headers=HEADERS
+).json()
+
+intel = pulse.get(<span class="t-s">"intelligence"</span>) <span class="t-kw">or</span> {}
+print(intel.get(<span class="t-s">"summary"</span>))
+print(intel.get(<span class="t-s">"divergence_explanation"</span>))</div>
+        </div>
+      </div>
+
+      <div id="lang-js" class="lang-content">
+        <div class="code-wrap" style="border-radius:0 8px 8px 8px;margin-top:0">
+          <div class="code-bar"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyCode('js-qs')">copy</button></div>
+          <div class="code-body" id="js-qs"><span class="t-kw">const</span> BASE    = <span class="t-s">"https://signalflo.xyz/api/v1"</span>;
+<span class="t-kw">const</span> TOKEN   = <span class="t-s">"your_token_here"</span>;
+<span class="t-kw">const</span> HEADERS = {<span class="t-s">"Authorization"</span>: <span class="t-s">`Token ${TOKEN}`</span>};
+
+<span class="t-c">// trending topics</span>
+<span class="t-kw">const</span> {topics} = <span class="t-kw">await</span> fetch(
+  <span class="t-s">`${BASE}/trending/?window=60&amp;limit=10`</span>,
+  {headers: HEADERS}
+).then(r => r.json());
+
+topics.forEach(t => console.log(t.topic, t.trend_score));
+
+<span class="t-c">// topic intelligence</span>
+<span class="t-kw">const</span> pulse = <span class="t-kw">await</span> fetch(
+  <span class="t-s">`${BASE}/pulse/?topic=iran`</span>,
+  {headers: HEADERS}
+).then(r => r.json());
+
+<span class="t-kw">const</span> {intelligence} = pulse;
+<span class="t-kw">if</span> (intelligence) {
+  console.log(intelligence.summary);
+  console.log(intelligence.dominant_narrative);
+}</div>
+        </div>
+      </div>
+
+      <div id="lang-node" class="lang-content">
+        <div class="code-wrap" style="border-radius:0 8px 8px 8px;margin-top:0">
+          <div class="code-bar"><span class="code-lang">node.js</span><button class="copy-btn" onclick="copyCode('node-qs')">copy</button></div>
+          <div class="code-body" id="node-qs"><span class="t-c">// Node 18+ has built-in fetch. Older: npm install node-fetch</span>
+<span class="t-kw">const</span> BASE    = <span class="t-s">"https://signalflo.xyz/api/v1"</span>;
+<span class="t-kw">const</span> TOKEN   = <span class="t-s">"your_token_here"</span>;
+<span class="t-kw">const</span> HEADERS = {<span class="t-s">"Authorization"</span>: <span class="t-s">`Token ${TOKEN}`</span>};
+
+<span class="t-kw">const</span> {topics} = <span class="t-kw">await</span> fetch(
+  <span class="t-s">`${BASE}/trending/?window=60&limit=10`</span>,
+  {headers: HEADERS}
+).then(r => r.json());
+
+topics.forEach(t => console.log(t.topic, t.trend_score));</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="trending">
+      <h2>/trending/</h2>
+      <div class="section-rule"></div>
+      <div class="ep-head">
+        <span class="method">GET</span>
+        <span class="ep-url">/api/v1/trending/</span>
+      </div>
+      <p class="ep-desc">Returns trending topics ranked by signal velocity and cross-platform spread. Cross-platform topics rank higher than single-platform ones.</p>
+      <h3>Parameters</h3>
+      <table class="params-table">
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr><td>window</td><td>integer</td><td><span class="optional">optional</span> Time window in minutes. Default: 60. Try 240 for more results.</td></tr>
+        <tr><td>platform</td><td>string</td><td><span class="optional">optional</span> Filter by: all | reddit | hackernews | bluesky | youtube. Default: all.</td></tr>
+        <tr><td>limit</td><td>integer</td><td><span class="optional">optional</span> Max topics returned. 1–50. Default: 20.</td></tr>
+      </table>
+      <h3>Example</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('trending-ex')">copy</button></div>
+        <div class="code-body" id="trending-ex">curl "https://signalflo.xyz/api/v1/trending/?window=60&limit=5" \
+  -H "Authorization: Token YOUR_KEY"</div>
+      </div>
+      <h3>Response Fields</h3>
+      <div class="resp-block">
+        <div class="resp-field"><span class="rf-name">topics[].topic</span><span class="rf-type">string</span><span class="rf-desc">Topic name extracted by spaCy NER</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].trend_score</span><span class="rf-type">float</span><span class="rf-desc">Composite score: velocity × platform spread × sentiment weight</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].signal_count</span><span class="rf-type">integer</span><span class="rf-desc">Signals mentioning this topic in the window</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].platform_count</span><span class="rf-type">integer</span><span class="rf-desc">Distinct platforms covering this topic</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].platforms</span><span class="rf-type">array</span><span class="rf-desc">List of platform names</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].avg_sentiment</span><span class="rf-type">float</span><span class="rf-desc">Average VADER compound score (-1 to +1)</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].avg_velocity</span><span class="rf-type">float</span><span class="rf-desc">Average score change per second</span></div>
+        <div class="resp-field"><span class="rf-name">topics[].cross_platform</span><span class="rf-type">boolean</span><span class="rf-desc">True if topic appears on 2+ platforms</span></div>
+      </div>
+    </section>
+
+    <section id="pulse">
+      <h2>/pulse/</h2>
+      <div class="section-rule"></div>
+      <div class="ep-head">
+        <span class="method">GET</span>
+        <span class="ep-url">/api/v1/pulse/?topic=</span>
+      </div>
+      <p class="ep-desc">Deep intelligence for a single topic. Returns per-platform sentiment breakdown, divergence score, momentum, and LLM-generated intelligence including summary, dominant narrative, emerging counter-angle and platform divergence explanation.</p>
+      <div class="callout tip">
+        <div class="callout-label">Most Valuable Endpoint</div>
+        The <b>intelligence</b> block contains LLM-generated analysis updated every 15 minutes — not available anywhere else.
+      </div>
+      <h3>Parameters</h3>
+      <table class="params-table">
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr><td>topic</td><td>string</td><td><span class="required">required</span> Topic name. Use topics from /trending/ for best results.</td></tr>
+        <tr><td>window</td><td>integer</td><td><span class="optional">optional</span> Time window in minutes. Default: 60.</td></tr>
+      </table>
+      <h3>Example</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('pulse-ex')">copy</button></div>
+        <div class="code-body" id="pulse-ex">curl "https://signalflo.xyz/api/v1/pulse/?topic=iran&window=60" \
+  -H "Authorization: Token YOUR_KEY"</div>
+      </div>
+      <h3>Response Fields</h3>
+      <div class="resp-block">
+        <div class="resp-field"><span class="rf-name">overall_sentiment</span><span class="rf-type">float</span><span class="rf-desc">Mean sentiment across all platforms (-1 to +1)</span></div>
+        <div class="resp-field"><span class="rf-name">overall_momentum</span><span class="rf-type">string</span><span class="rf-desc">rising | stable | falling</span></div>
+        <div class="resp-field"><span class="rf-name">signal_count</span><span class="rf-type">integer</span><span class="rf-desc">Total signals in the window</span></div>
+        <div class="resp-field"><span class="rf-name">platforms</span><span class="rf-type">object</span><span class="rf-desc">Per-platform breakdown with avg_sentiment, signal_count, momentum, top_signal</span></div>
+        <div class="resp-field"><span class="rf-name">divergence.score</span><span class="rf-type">float</span><span class="rf-desc">Max sentiment difference between platforms (0 to 2)</span></div>
+        <div class="resp-field"><span class="rf-name">divergence.alert</span><span class="rf-type">boolean</span><span class="rf-desc">True if score ≥ 0.3 — platforms significantly disagree</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence</span><span class="rf-type">object</span><span class="rf-desc">LLM-generated analysis. See Intelligence Block below.</span></div>
+      </div>
+    </section>
+
+    <section id="signals">
+      <h2>/signals/</h2>
+      <div class="section-rule"></div>
+      <div class="ep-head">
+        <span class="method">GET</span>
+        <span class="ep-url">/api/v1/signals/</span>
+      </div>
+      <p class="ep-desc">Paginated raw signal feed across all platforms ordered by ingestion time. Each signal is a post, comment or story from one of the 4 platforms.</p>
+      <h3>Parameters</h3>
+      <table class="params-table">
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr><td>platform</td><td>string</td><td><span class="optional">optional</span> Filter by platform.</td></tr>
+        <tr><td>limit</td><td>integer</td><td><span class="optional">optional</span> Page size. Default: 20, max: 100.</td></tr>
+        <tr><td>ordering</td><td>string</td><td><span class="optional">optional</span> Use -first_seen_at for newest first.</td></tr>
+      </table>
+      <h3>Example</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('signals-ex')">copy</button></div>
+        <div class="code-body" id="signals-ex">curl "https://signalflo.xyz/api/v1/signals/?limit=20&ordering=-first_seen_at" \
+  -H "Authorization: Token YOUR_KEY"</div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <h2>/compare/</h2>
+      <div class="section-rule"></div>
+      <div class="ep-head">
+        <span class="method">GET</span>
+        <span class="ep-url">/api/v1/compare/</span>
+      </div>
+      <p class="ep-desc">Cross-platform divergence events — moments when platforms covered the same topic with significantly different sentiment. Useful for detecting platform-specific bias or information asymmetry.</p>
+      <h3>Example</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('compare-ex')">copy</button></div>
+        <div class="code-body" id="compare-ex">curl "https://signalflo.xyz/api/v1/compare/" \
+  -H "Authorization: Token YOUR_KEY"</div>
+      </div>
+    </section>
+
+    <section id="stats">
+      <h2>/stats/</h2>
+      <div class="section-rule"></div>
+      <div class="ep-head">
+        <span class="method">GET</span>
+        <span class="ep-url">/api/v1/stats/totals/</span>
+      </div>
+      <p class="ep-desc">All-time and last-24h signal counts per platform.</p>
+      <h3>Example</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode('stats-ex')">copy</button></div>
+        <div class="code-body" id="stats-ex">curl "https://signalflo.xyz/api/v1/stats/totals/" \
+  -H "Authorization: Token YOUR_KEY"</div>
+      </div>
+      <h3>Response</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">json</span></div>
+        <div class="code-body">{
+  <span class="t-k">"all_time"</span>: {
+    <span class="t-k">"total"</span>:      <span class="t-n">1721135</span>,
+    <span class="t-k">"reddit"</span>:     <span class="t-n">150937</span>,
+    <span class="t-k">"hackernews"</span>: <span class="t-n">11419</span>,
+    <span class="t-k">"youtube"</span>:    <span class="t-n">84164</span>,
+    <span class="t-k">"bluesky"</span>:    <span class="t-n">1474597</span>
+  },
+  <span class="t-k">"last_24h"</span>: {
+    <span class="t-k">"total"</span>:      <span class="t-n">191080</span>,
+    <span class="t-k">"reddit"</span>:     <span class="t-n">17569</span>,
+    <span class="t-k">"hackernews"</span>: <span class="t-n">988</span>,
+    <span class="t-k">"youtube"</span>:    <span class="t-n">9779</span>,
+    <span class="t-k">"bluesky"</span>:    <span class="t-n">162744</span>
+  }
+}</div>
+      </div>
+    </section>
+
+    <section id="intelligence">
+      <h2>Intelligence Block</h2>
+      <div class="section-rule"></div>
+      <p>Every <b>/pulse/</b> response includes an <b>intelligence</b> object generated by an LLM every 15 minutes. It reads the top signals for the topic across all platforms and extracts structured analysis.</p>
+      <div class="callout info">
+        <div class="callout-label">How it works</div>
+        The summariser runs outside the hot path — ingestion is never delayed. It reads from the DB every 15 minutes, calls the LLM on trending topics, and writes results back. The API joins the latest summary on each request at zero latency cost.
+      </div>
+      <h3>Intelligence Fields</h3>
+      <div class="resp-block">
+        <div class="resp-field"><span class="rf-name">intelligence.summary</span><span class="rf-type">string</span><span class="rf-desc">3-sentence narrative: what people are saying, what's driving volume, overall mood.</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence.dominant_narrative</span><span class="rf-type">string</span><span class="rf-desc">5–8 words: the main thing most people are saying.</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence.emerging_angle</span><span class="rf-type">string</span><span class="rf-desc">5–8 words: minority view or counter-narrative. Null if none.</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence.divergence_explanation</span><span class="rf-type">string</span><span class="rf-desc">1 sentence explaining why platforms differ. Null if they agree.</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence.generated_at</span><span class="rf-type">datetime</span><span class="rf-desc">When this summary was generated. Max age ~30 min for active topics.</span></div>
+        <div class="resp-field"><span class="rf-name">intelligence.model</span><span class="rf-type">string</span><span class="rf-desc">LLM model used to generate this summary.</span></div>
+      </div>
+      <h3>Example Response</h3>
+      <div class="code-wrap">
+        <div class="code-bar"><span class="code-lang">json</span></div>
+        <div class="code-body">{
+  <span class="t-k">"intelligence"</span>: {
+    <span class="t-k">"summary"</span>: <span class="t-s">"People are discussing US attacks on Iran's Kharg Island oil infrastructure. The volume is driven by breaking news coverage across all 4 platforms. Overall mood is strongly negative."</span>,
+    <span class="t-k">"dominant_narrative"</span>: <span class="t-s">"US strikes on Kharg Island cause oil supply fears"</span>,
+    <span class="t-k">"emerging_angle"</span>: <span class="t-s">"Diplomatic back-channel negotiations still active"</span>,
+    <span class="t-k">"divergence_explanation"</span>: <span class="t-s">"Bluesky users provide geopolitical context while Reddit primarily shares news reactions."</span>,
+    <span class="t-k">"generated_at"</span>: <span class="t-s">"2026-03-16T10:31:23Z"</span>,
+    <span class="t-k">"model"</span>: <span class="t-s">"llama-3.1-8b-instant"</span>
+  }
+}</div>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>Errors</h2>
+      <div class="section-rule"></div>
+      <table class="params-table">
+        <tr><th>Status</th><th>Meaning</th><th>Description</th></tr>
+        <tr><td>200</td><td>OK</td><td>Request succeeded.</td></tr>
+        <tr><td>400</td><td>Bad Request</td><td>Missing required parameter.</td></tr>
+        <tr><td>401</td><td>Unauthorized</td><td>Invalid or missing API key.</td></tr>
+        <tr><td>429</td><td>Too Many Requests</td><td>Rate limit exceeded.</td></tr>
+        <tr><td>500</td><td>Server Error</td><td>Something went wrong. Try again in a few seconds.</td></tr>
+      </table>
+    </section>
+
+    
+
+  </div>
+</div>
+
+<div class="docs-footer">
+  <div class="docs-footer-note">SignalFlow &mdash; <a href="/">signalflo.xyz</a></div>
+  <div class="docs-footer-note"><a href="mailto:signalfloo@proton.me" class="footer-link">signalfloo@proton.me</span></a></div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+function setLang(lang, el) {
+  document.querySelectorAll('.lang-tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.lang-content').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  var target = document.getElementById('lang-'+lang);
+  if(target) target.classList.add('active');
+}
+
+function copyCode(id) {
+  var el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText).then(function(){
+    var btns = document.querySelectorAll('.copy-btn');
+    btns.forEach(function(b){
+      if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf(id)>-1){
+        b.textContent='copied!';
+        setTimeout(function(){b.textContent='copy'},1500);
+      }
+    });
+  });
+}
+
+/* sidebar active on scroll */
+var sections = document.querySelectorAll('section[id]');
+var sbLinks  = document.querySelectorAll('.sb-link');
+window.addEventListener('scroll', functio

@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,signalflo.in,www.signalflo.in").split(",")
-CSRF_TRUSTED_ORIGINS = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "https://signalflo.in,https://www.signalflo.in").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "https://signalflo.in,https://www.signalflo.in,https://204.168.146.134").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "channels",
     "rest_framework_simplejwt",
-    "apps.signals",       # single app — all 4 platforms
+    "apps.signals",
+    "rest_framework.authtoken"       # single app — all 4 platforms
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.signals.middleware.ApiUsageMiddleware",
 ]
 
 ROOT_URLCONF      = "config.urls"
@@ -114,19 +116,28 @@ CHANNEL_LAYERS = {
         "CONFIG": {"hosts": [f"{_redis_base}/2"]},
     }
 }
-
+EMAIL_BACKEND  = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST     = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT     = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS  = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL  = os.environ.get("DEFAULT_FROM_EMAIL", "yogesh249@proton.me")
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/min",
         "user": "100/min",
     },
 }
@@ -159,3 +170,11 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"
 ).split(",") if not DEBUG else []
+
+EMAIL_BACKEND  = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST     = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT     = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS  = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL  = os.environ.get("DEFAULT_FROM_EMAIL", "yogesh249@proton.me")

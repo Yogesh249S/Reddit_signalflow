@@ -1,0 +1,5 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install psycopg2-binary redis requests --no-cache-dir
+COPY monitor.py .
+CMD ["python3", "-u", "monitor.py"]

@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 # ── Hardcoded fallback baselines (from empirical observation) ─────────────────
 # Used on first startup before enough real data accumulates.
 # Update these as your platform data grows.
+
 _FALLBACK_BASELINES: dict[str, float] = {
-    "reddit":      150.0,   # average score for a 7-day-old post
-    "hackernews":  50.0,    # HN points are harder to accumulate
-    "bluesky":     10.0,    # early-stage platform, lower engagement
-    "youtube":     20.0,    # comment likes
+    "reddit":      1161.0,   # was 150 — actual rolling mean
+    "hackernews":  50.0,     # no data yet, keep as-is
+    "bluesky":     10.0,     # sentiment-only, raw_score=0 anyway
+    "youtube":     142.0,    # was 20 — actual rolling mean
 }
+
 _DEFAULT_BASELINE = 100.0
 
 # Rolling window size per platform

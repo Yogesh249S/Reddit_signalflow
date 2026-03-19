@@ -44,10 +44,11 @@ class HackerNewsIngester(BaseIngester):
         if not self.session:
             return
 
+        cutoff = int(time.time()) - 3600  # only stories from last 1 hour
         params = {
-            "tags":        "story",
-            "hitsPerPage": 100,
-            "numericFilters": "created_at_i>0",
+            "tags":           "story",
+            "hitsPerPage":    100,
+            "numericFilters": f"created_at_i>{cutoff}",
         }
 
         try:

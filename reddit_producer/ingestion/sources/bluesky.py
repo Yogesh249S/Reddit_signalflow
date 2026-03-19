@@ -240,7 +240,16 @@ TOPIC_KEYWORDS = [
 '''
 
 TOPIC_KEYWORDS = [
-    "wall street", "stock markets"
+    # Finance
+    "wall street", "stock market", "crypto", "bitcoin", "investing",
+    # Tech
+    "ai", "llm", "openai", "software", "startup",
+    # Entertainment / Film
+    "bollywood", "hollywood", "netflix", "box office",
+    # India
+    "india", "bangalore", "mumbai",
+    # General high-signal
+    "breaking", "trending",
 ]
 # Bluesky profile resolver for handle lookup
 PROFILE_URL = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile"

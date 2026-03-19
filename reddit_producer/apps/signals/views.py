@@ -34,7 +34,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Signal, Community, PlatformDivergence, SourceConfig
+from .models import Signal, Community, PlatformDivergence, SourceConfig, TopicSummary
 from .serializers import (
     SignalSerializer, CommunitySerializer,
     PlatformDivergenceSerializer, SourceConfigSerializer,
@@ -43,9 +43,9 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 CACHE_TTL_SIGNALS  = 30
-CACHE_TTL_PULSE    = 60
-CACHE_TTL_TRENDING = 60
-CACHE_TTL_STATS    = 30
+CACHE_TTL_PULSE    = 300
+CACHE_TTL_TRENDING = 120
+CACHE_TTL_STATS    = 300
 CACHE_TTL_TIMELINE = 15
 CACHE_TTL_KEYWORDS = 30
 
@@ -62,6 +62,34 @@ def _momentum_label(velocity: float) -> str:
     if velocity > 2.0:  return "rising"
     if velocity < -1.0: return "falling"
     return "stable"
+
+
+
+def _get_intelligence(topic: str, window_minutes: int) -> dict | None:
+    """
+    Fetch the most recent LLM-generated summary for a topic.
+    Never raises — intelligence is enrichment, not load-bearing.
+    """
+    try:
+        summary = (
+            TopicSummary.objects
+            .filter(topic__iexact=topic)
+            .order_by("-generated_at")
+            .first()
+        )
+        if not summary:
+            return None
+        return {
+            "summary":                summary.summary_text,
+            "dominant_narrative":     summary.dominant_narrative,
+            "emerging_angle":         summary.emerging_angle,
+            "divergence_explanation": summary.divergence_explanation,
+            "generated_at":           summary.generated_at,
+            "model":                  summary.model_used,
+        }
+    except Exception as exc:
+        logger.warning("_get_intelligence failed for %r: %s", topic, exc)
+        return None
 
 
 # ── Unauthenticated ───────────────────────────────────────────────────────────
@@ -191,7 +219,7 @@ class PulseView(APIView):
     Cross-platform sentiment summary for one topic.
     The core product endpoint.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         topic  = request.query_params.get("topic", "").lower().strip()
@@ -220,9 +248,15 @@ class PulseView(APIView):
         total = qs.count()
         if total == 0:
             return Response({
-                "topic": topic, "as_of": now,
-                "overall_sentiment": None, "overall_momentum": "stable",
-                "signal_count": 0, "platforms": {}, "divergence": {"score": 0.0, "alert": False},
+                "topic":             topic,
+                "as_of":             now,
+                "window_minutes":    window,
+                "overall_sentiment": None,
+                "overall_momentum":  "stable",
+                "signal_count":      0,
+                "platforms":         {},
+                "divergence":        {"score": 0.0, "alert": False, "interpretation": "No data"},
+                "intelligence":      _get_intelligence(topic, window),
             })
 
         platform_stats = (
@@ -243,10 +277,17 @@ class PulseView(APIView):
             sentiments.append(avg_sent)
             top = (
                 qs.filter(platform=p)
-                .order_by("-raw_score")
-                .values("id", "title", "url", "raw_score")
+                .exclude(url="")
+                .order_by("-trending_score", "-raw_score")
+                .values("id", "title", "url", "raw_score", "trending_score")
                 .first()
             )
+            # Clean up CBOR blob IDs from Bluesky — replace with readable URL path
+            if top and top.get("id", "").startswith("bluesky:CBORTag"):
+                top = dict(top)
+                url = top.get("url", "")
+                # extract did:plc:.../post/xxx from bsky URL as clean id
+                top["id"] = url.replace("https://bsky.app/", "bsky://") if url else top["id"]
             platforms_data[p] = {
                 "avg_sentiment": avg_sent,
                 "signal_count":  stat["signal_count"],
@@ -288,6 +329,7 @@ class PulseView(APIView):
                 "alert":          divergence_alert,
                 "interpretation": interpretation,
             },
+            "intelligence":      _get_intelligence(topic, window),
         }
         cache.set(cache_key, result, CACHE_TTL_PULSE)
         return Response(result)
@@ -302,7 +344,7 @@ class TrendingView(APIView):
     Topics trending right now, ranked by signal velocity × platform spread.
     Cross-platform topics rank higher than single-platform ones.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         platform = request.query_params.get("platform", "all")
@@ -386,7 +428,7 @@ class CompareView(APIView):
     """
     GET /api/v1/compare/?topic=openai&platform_a=reddit&platform_b=hackernews
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         p          = request.query_params
@@ -430,7 +472,7 @@ class CompareView(APIView):
 # ── Stats (replaces /api/stats/) ──────────────────────────────────────────────
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def stats(request):
     """
     GET /api/v1/stats/?platform=reddit&start=2026-01-01&end=2026-01-31
@@ -498,8 +540,10 @@ def stats(request):
     return Response(result)
 
 
+
+
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def stats_timeline(request):
     """
     GET /api/v1/stats/timeline/?hours=24&platform=reddit
@@ -559,7 +603,7 @@ def stats_timeline(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def stats_keywords(request):
     """
     GET /api/v1/stats/keywords/?hours=6&platform=reddit
@@ -604,3 +648,105 @@ def stats_keywords(request):
     result = [{"word": row[0], "count": row[1]} for row in rows]
     cache.set(cache_key, result, CACHE_TTL_KEYWORDS)
     return Response(result)
+
+
+# ── Platform Totals ───────────────────────────────────────────────────────────
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def platform_totals(request):
+    """
+    GET /api/v1/stats/totals/
+    Returns all-time signal counts per platform + last 24h counts.
+    Same source as Grafana dashboard.
+    """
+    cached = cache.get("platform_totals")
+    if cached:
+        return Response(cached)
+
+    with connection.cursor() as cur:
+        # all-time totals
+        cur.execute("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE platform='reddit') as reddit,
+                COUNT(*) FILTER (WHERE platform='hackernews') as hackernews,
+                COUNT(*) FILTER (WHERE platform='youtube') as youtube,
+                COUNT(*) FILTER (WHERE platform='bluesky') as bluesky
+            FROM signals
+        """)
+        row = cur.fetchone()
+
+        # last 24h totals
+        cur.execute("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE platform='reddit') as reddit,
+                COUNT(*) FILTER (WHERE platform='hackernews') as hackernews,
+                COUNT(*) FILTER (WHERE platform='youtube') as youtube,
+                COUNT(*) FILTER (WHERE platform='bluesky') as bluesky
+            FROM signals
+            WHERE last_updated_at >= NOW() - INTERVAL '24 hours'
+        """)
+        row24 = cur.fetchone()
+
+    result = {
+        "as_of": _now(),
+        "all_time": {
+            "total":      row[0],
+            "reddit":     row[1],
+            "hackernews": row[2],
+            "youtube":    row[3],
+            "bluesky":    row[4],
+        },
+        "last_24h": {
+            "total":      row24[0],
+            "reddit":     row24[1],
+            "hackernews": row24[2],
+            "youtube":    row24[3],
+            "bluesky":    row24[4],
+        },
+    }
+    cache.set("platform_totals", result, 300)  # cache 5 min
+    return Response(result)
+
+
+# ── API Access Request ────────────────────────────────────────────────────────
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def request_api_access(request):
+    """
+    POST /api/v1/access/request/
+    Body: {"name": "...", "email": "..."}
+    Creates a Django user + DRF token, returns token immediately.
+    If email already exists, returns the existing token.
+    """
+    name  = (request.data.get("name")  or "").strip()
+    email = (request.data.get("email") or "").strip().lower()
+
+    if not name:
+        return Response({"error": "Name is required."}, status=400)
+    if not email or "@" not in email:
+        return Response({"error": "Valid email is required."}, status=400)
+
+    from django.contrib.auth.models import User
+    from rest_framework.authtoken.models import Token
+
+    # get or create user
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            "username": email.split("@")[0][:30] + "_" + email.split("@")[1].split(".")[0][:10],
+            "first_name": name.split()[0][:30] if name else "",
+        }
+    )
+
+    # get or create token
+    token, _ = Token.objects.get_or_create(user=user)
+
+    return Response({
+        "token":   token.key,
+        "created": created,
+        "message": "Key generated successfully." if created else "An API key already exists for this email.",
+    })

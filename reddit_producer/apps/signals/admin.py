@@ -1,112 +1,150 @@
 """
-apps/signals/admin.py
-======================
-Replaces apps/reddit/admin.py.
-
-SourceConfigAdmin replaces SubredditConfigAdmin — same hot-reload
-pattern but covers all 4 platforms from one admin table.
-Signal and PlatformDivergence are read-only (written by processing service).
+apps/signals/admin.py — add this APIAccessRequest admin
+=========================================================
+One-click approve: creates Django user, generates token, sends email.
 """
 
 from django.contrib import admin
-from .models import Signal, Community, PlatformDivergence, SourceConfig
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.utils import timezone
+from django.conf import settings
+import secrets
+import string
+
+# from .models import APIAccessRequest
 
 
-@admin.register(SourceConfig)
-class SourceConfigAdmin(admin.ModelAdmin):
-    """
-    Replaces SubredditConfigAdmin.
-    Ops can add/toggle/tune any source across all 4 platforms.
-    Changes hot-reload in the ingestion scheduler within ~60 seconds.
-    """
-    list_display  = ("platform", "identifier", "label",
-                     "interval_seconds", "is_active", "added_by", "added_at")
-    list_filter   = ("platform", "is_active")
-    search_fields = ("identifier", "label", "added_by")
-    list_editable = ("is_active", "interval_seconds")
-    readonly_fields = ("added_at",)
-    ordering = ("platform", "identifier")
+def _generate_api_token():
+    """Generate a secure 40-char hex token."""
+    return secrets.token_hex(20)
+
+
+def _send_approval_email(email, name, token):
+    subject = "Your SignalFlow API token"
+    body = f"""Hi {name},
+
+Your SignalFlow API access is approved. Here is your token:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR API TOKEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  {token}
+
+Keep this private — it grants full API access.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+curl https://signalflo.in/api/v1/trending/ \\
+  -H "Authorization: Token {token}"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PYTHON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import requests
+
+headers = {{"Authorization": "Token {token}"}}
+r = requests.get(
+    "https://signalflo.in/api/v1/trending/",
+    params={{"window_minutes": 120}},
+    headers=headers
+)
+print(r.json())
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RATE LIMITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+100 requests / minute. Data refreshes every 30s.
+
+Full docs: https://signalflo.in/docs/
+
+Questions? Reply to this email.
+
+— Yogesh
+SignalFlow
+"""
+    send_mail(
+        subject=subject,
+        message=body,
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "yogesh249@proton.me"),
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+
+@admin.action(description="✅ Approve selected requests — create user + send API token")
+def approve_requests(modeladmin, request, queryset):
+    from rest_framework.authtoken.models import Token
+
+    approved = 0
+
+    for req in queryset.filter(status="pending"):
+        # Generate username from email prefix, ensure unique
+        base_username = req.email.split("@")[0][:20].lower().replace(".", "_")
+        username = base_username
+        counter  = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        # Create Django user (password not needed — token auth only)
+        user = User.objects.create_user(
+            username=username,
+            email=req.email,
+            first_name=req.name.split()[0] if req.name else "",
+        )
+
+        # Generate DRF token
+        token, _ = Token.objects.get_or_create(user=user)
+
+        # Update request
+        req.status      = "approved"
+        req.user        = user
+        req.reviewed_at = timezone.now()
+        req.save()
+
+        # Send token email
+        try:
+            _send_approval_email(req.email, req.name, token.key)
+            approved += 1
+        except Exception as e:
+            modeladmin.message_user(
+                request,
+                f"Token created for {req.email} but email failed: {e}",
+                level="warning",
+            )
+            approved += 1
+
+    if approved:
+        modeladmin.message_user(request, f"Approved {approved} request(s) and sent API tokens.")
+
+
+@admin.action(description="❌ Reject selected requests")
+def reject_requests(modeladmin, request, queryset):
+    updated = queryset.filter(status="pending").update(
+        status="rejected",
+        reviewed_at=timezone.now(),
+    )
+    modeladmin.message_user(request, f"Rejected {updated} request(s).")
+
+
+# @admin.register(APIAccessRequest)
+class APIAccessRequestAdmin(admin.ModelAdmin):
+    list_display  = ("email", "name", "company", "use_case", "status", "created_at")
+    list_filter   = ("status", "use_case")
+    search_fields = ("email", "name", "company")
+    readonly_fields = ("created_at", "reviewed_at", "user")
+    actions       = [approve_requests, reject_requests]
 
     fieldsets = (
-        ("Source", {
-            "fields": ("platform", "identifier", "label", "is_active", "added_by"),
+        ("Applicant", {
+            "fields": ("name", "email", "company", "use_case", "description")
         }),
-        ("Polling", {
-            "fields": ("interval_seconds",),
-            "description": (
-                "Changes take effect within ~60 seconds. "
-                "The ingestion scheduler polls this table and restarts "
-                "affected tasks automatically."
-            ),
-        }),
-        ("Timestamps", {
-            "fields": ("added_at",),
-            "classes": ("collapse",),
+        ("Status", {
+            "fields": ("status", "created_at", "reviewed_at", "user")
         }),
     )
-
-    actions = ["activate_selected", "deactivate_selected"]
-
-    @admin.action(description="Activate selected sources")
-    def activate_selected(self, request, queryset):
-        updated = queryset.update(is_active=True)
-        self.message_user(request, f"{updated} source(s) activated.")
-
-    @admin.action(description="Deactivate selected sources (pause ingestion)")
-    def deactivate_selected(self, request, queryset):
-        updated = queryset.update(is_active=False)
-        self.message_user(request, f"{updated} source(s) deactivated.")
-
-
-@admin.register(Community)
-class CommunityAdmin(admin.ModelAdmin):
-    list_display  = ("platform", "name", "created_at")
-    list_filter   = ("platform",)
-    search_fields = ("name",)
-    readonly_fields = ("id", "created_at")
-    ordering = ("platform", "name")
-
-
-@admin.register(Signal)
-class SignalAdmin(admin.ModelAdmin):
-    list_display  = ("id", "platform", "short_text", "community",
-                     "raw_score", "sentiment_label", "is_trending", "published_at")
-    list_filter   = ("platform", "sentiment_label", "is_trending")
-    search_fields = ("title", "body", "author", "id")
-    readonly_fields = (
-        "id", "platform", "source_id", "community",
-        "title", "body", "url", "author",
-        "published_at", "first_seen_at", "last_updated_at",
-        "raw_score", "comment_count", "normalised_score",
-        "score_velocity", "comment_velocity",
-        "trending_score", "is_trending",
-        "sentiment_compound", "sentiment_label",
-        "keywords", "topics", "extra",
-    )
-    ordering = ("-published_at",)
-
-    def short_text(self, obj):
-        return (obj.title or obj.body or "")[:60]
-    short_text.short_description = "Title / Body"
-
-    def has_add_permission(self, request):    return False
-    def has_change_permission(self, request, obj=None): return False
-
-
-@admin.register(PlatformDivergence)
-class PlatformDivergenceAdmin(admin.ModelAdmin):
-    list_display  = ("topic", "platform_a", "platform_b",
-                     "divergence_score", "origin_platform",
-                     "origin_lag_minutes", "is_resolved", "detected_at")
-    list_filter   = ("platform_a", "platform_b", "is_resolved")
-    search_fields = ("topic",)
-    readonly_fields = (
-        "topic", "detected_at", "platform_a", "platform_b",
-        "sentiment_a", "sentiment_b", "divergence_score",
-        "origin_platform", "origin_lag_minutes",
-        "sample_signal_ids", "resolved_at", "is_resolved",
-    )
-    ordering = ("-detected_at",)
-
-    def has_add_permission(self, request):    return False
-    def has_change_permission(self, request, obj=None): return False

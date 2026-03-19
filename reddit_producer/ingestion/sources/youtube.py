@@ -1,21 +1,3 @@
-"""
-ingestion/sources/youtube.py
-=============================
-YouTube comment ingestion via YouTube Data API v3.
-
-Strategy:
-  - Maintain a list of tracked channels (tech-focused)
-  - Every poll cycle: fetch latest videos from each channel
-  - For each new video: fetch top-level comments
-  - Quota: 10,000 units/day. Each commentThreads page = 1 unit.
-    At 100 comments/page: 10,000 pages/day = 1M comments/day theoretical max.
-    In practice, track ~50 channels, fetch comments on latest 3 videos each
-    per 4-hour cycle = manageable quota usage.
-
-Channels are configurable via YOUTUBE_CHANNELS env var (comma-separated IDs)
-or hardcoded defaults below.
-"""
-
 import asyncio
 import logging
 import os
@@ -29,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
 
-# Default tech channels to track — override with YOUTUBE_CHANNELS env var
+# Default tech channels — override with YOUTUBE_CHANNELS env var
 DEFAULT_CHANNELS = [
     "UCsBjURrPoezykLs9EqgamOA",  # Fireship
     "UCVhQ2NnY5Rskt6UjCUkJ_DA",  # Tech with Tim
@@ -38,7 +20,7 @@ DEFAULT_CHANNELS = [
     "UC295-Dw4tztFUTpCHoEjVAQ",  # The Coding Train
     "UCnUYZLuoy1rq1aVMwx4aTzw",  # Google for Developers
     "UCddiUEpeqJcYeBxX1IVBKvQ",  # Theo
-    "UCsBjURrPoezykLs9EqgamOA",  # ByteByteGo
+    "UCwFl9Y49sWChrddETD9QhZA",  # ByteByteGo (correct ID)
 ]
 
 
@@ -53,8 +35,9 @@ class YouTubeIngester(BaseIngester):
         self.session = None
         self._seen_videos:   set[str] = set()
         self._seen_comments: set[str] = set()
+        # Cache channel_id -> uploads_playlist_id so we only fetch it once
+        self._uploads_playlist_cache: dict[str, str] = {}
 
-        # Load channel list from env or use defaults
         channels_env = os.environ.get("YOUTUBE_CHANNELS", "")
         self.channels = (
             [c.strip() for c in channels_env.split(",") if c.strip()]
@@ -71,7 +54,83 @@ class YouTubeIngester(BaseIngester):
         for channel_id in self.channels:
             async for comment in self._fetch_channel_comments(channel_id):
                 yield comment
-            await asyncio.sleep(0.5)  # brief pause between channels
+            await asyncio.sleep(0.5)
+
+    async def _get_uploads_playlist_id(self, channel_id: str) -> str | None:
+        """
+        Get the uploads playlist ID for a channel.
+        Cost: 1 unit (replaces the 100-unit search call).
+        Result is cached — only called once per channel per process lifetime.
+        """
+        if channel_id in self._uploads_playlist_cache:
+            return self._uploads_playlist_cache[channel_id]
+
+        params = {
+            "key":  self.api_key,
+            "id":   channel_id,
+            "part": "contentDetails",
+        }
+        async with self.session.get(
+            f"{YOUTUBE_API_BASE}/channels",
+            params=params,
+            timeout=aiohttp.ClientTimeout(total=15),
+        ) as resp:
+            data = await resp.json()
+            if "error" in data:
+                raise RuntimeError(data["error"].get("message", "API error"))
+            items = data.get("items", [])
+            if not items:
+                logger.warning("No channel found for ID %s", channel_id)
+                return None
+            playlist_id = (
+                items[0]
+                .get("contentDetails", {})
+                .get("relatedPlaylists", {})
+                .get("uploads")
+            )
+            if playlist_id:
+                self._uploads_playlist_cache[channel_id] = playlist_id
+            return playlist_id
+
+    async def _get_latest_videos(self, channel_id: str, max_results: int = 3) -> list:
+        """
+        Fetch most recent videos via uploads playlist.
+        Cost: 1 unit per call (was 100 units with /search).
+        """
+        playlist_id = await self._get_uploads_playlist_id(channel_id)
+        if not playlist_id:
+            return []
+
+        params = {
+            "key":        self.api_key,
+            "playlistId": playlist_id,
+            "part":       "snippet",
+            "maxResults": max_results,
+        }
+        async with self.session.get(
+            f"{YOUTUBE_API_BASE}/playlistItems",
+            params=params,
+            timeout=aiohttp.ClientTimeout(total=15),
+        ) as resp:
+            data = await resp.json()
+            if "error" in data:
+                raise RuntimeError(data["error"].get("message", "API error"))
+
+            videos = []
+            for item in data.get("items", []):
+                snippet = item.get("snippet", {})
+                video_id = snippet.get("resourceId", {}).get("videoId")
+                if not video_id:
+                    continue
+                # Reshape to match the format _fetch_channel_comments expects
+                videos.append({
+                    "id":      {"videoId": video_id},
+                    "snippet": {
+                        "title":        snippet.get("title", ""),
+                        "channelTitle": snippet.get("channelTitle", ""),
+                    },
+                })
+            return videos
 
     async def _fetch_channel_comments(self, channel_id: str) -> AsyncIterator[dict]:
         """Fetch latest videos from a channel then pull comments for each."""
@@ -82,8 +141,8 @@ class YouTubeIngester(BaseIngester):
             return
 
         for video in videos:
-            video_id    = video["id"]["videoId"]
-            video_title = video["snippet"]["title"]
+            video_id      = video["id"]["videoId"]
+            video_title   = video["snippet"]["title"]
             channel_title = video["snippet"]["channelTitle"]
 
             async for comment in self._fetch_video_comments(
@@ -92,32 +151,6 @@ class YouTubeIngester(BaseIngester):
                 yield comment
 
             await asyncio.sleep(0.2)
-
-    async def _get_latest_videos(self, channel_id: str, max_results: int = 3) -> list:
-        """
-        Fetch most recent videos from a channel.
-        Cost: 100 units per call.
-        """
-        params = {
-            "key":        self.api_key,
-            "channelId":  channel_id,
-            "part":       "id,snippet",
-            "order":      "date",
-            "type":       "video",
-            "maxResults": max_results,
-        }
-        async with self.session.get(
-            f"{YOUTUBE_API_BASE}/search",
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=15)
-        ) as resp:
-            data = await resp.json()
-            if "error" in data:
-                raise RuntimeError(data["error"].get("message", "API error"))
-            return [
-                item for item in data.get("items", [])
-                if item.get("id", {}).get("kind") == "youtube#video"
-            ]
 
     async def _fetch_video_comments(
         self,
@@ -130,9 +163,8 @@ class YouTubeIngester(BaseIngester):
         """
         Fetch top-level comment threads for a video.
         Cost: 1 unit per page, 100 comments per page.
-        max_pages=2 means max 200 comments per video, 2 units spent.
         """
-        page_token = None
+        page_token    = None
         pages_fetched = 0
 
         while pages_fetched < max_pages:
@@ -150,14 +182,17 @@ class YouTubeIngester(BaseIngester):
                 async with self.session.get(
                     f"{YOUTUBE_API_BASE}/commentThreads",
                     params=params,
-                    timeout=aiohttp.ClientTimeout(total=15)
+                    timeout=aiohttp.ClientTimeout(total=15),
                 ) as resp:
                     data = await resp.json()
 
                     if "error" in data:
                         err = data["error"].get("message", "")
-                        if "commentsDisabled" in err:
+                        if "commentsDisabled" in err or "disabled comments" in err:
                             logger.debug("Comments disabled for video %s", video_id)
+                        elif "quota" in err.lower():
+                            logger.warning("YouTube quota exhausted — halting poll cycle")
+                            return
                         else:
                             logger.warning("YouTube API error for %s: %s", video_id, err)
                         return
@@ -168,15 +203,12 @@ class YouTubeIngester(BaseIngester):
                             continue
                         self._seen_comments.add(comment_id)
 
-                        # Evict if set gets large
                         if len(self._seen_comments) > 50_000:
                             self._seen_comments = set(list(self._seen_comments)[25_000:])
 
-                        # Inject video/channel metadata for the normaliser
                         item["video_title"]   = video_title
                         item["channel_id"]    = channel_id
                         item["channel_title"] = channel_title
-
                         yield item
 
                     page_token = data.get("nextPageToken")

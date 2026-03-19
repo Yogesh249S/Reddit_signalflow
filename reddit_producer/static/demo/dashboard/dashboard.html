@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SignalFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080a;--bg2:#0f0f12;--bg3:#16161b;
+  --border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.11);
+  --text:#dcdcdc;--muted:#4a4a55;
+  --reddit:#ff5722;--hn:#f5a623;--bsky:#1d9bf0;--yt:#e63946;
+  --green:#00c97a;--yellow:#f5c518;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:42px;border-bottom:1px solid var(--border)}
+.logo{font-size:13px;font-weight:800;letter-spacing:.12em}
+.logo em{color:var(--green);font-style:normal}
+.topbar-right{display:flex;align-items:center;gap:20px}
+.kpi{display:flex;flex-direction:column;align-items:flex-end}
+.kpi-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;line-height:1}
+.kpi-lbl{font-size:8px;letter-spacing:.12em;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.live-badge{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--green);letter-spacing:.1em;border:1px solid rgba(0,201,122,.22);padding:4px 9px;border-radius:2px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#clock{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+
+/* GRID */
+.main{flex:1;display:grid;grid-template-columns:260px 1fr 240px;grid-template-rows:1fr 210px;gap:1px;background:var(--border);overflow:hidden;min-height:0}
+.panel{background:var(--bg);overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.ph{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:9px 13px 7px;border-bottom:1px solid var(--border)}
+.pt{font-size:8px;font-weight:600;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.pb{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.pb::-webkit-scrollbar{width:3px}
+.pb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* FEED col1 rows1-2 */
+.feed{grid-column:1;grid-row:1/3}
+.sig{padding:8px 0;border-bottom:1px solid var(--border)}
+.sig:last-child{border-bottom:none}
+.sig-r1{display:flex;align-items:flex-start;gap:6px;margin-bottom:3px}
+.pbadge{flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:7px;font-weight:500;padding:2px 5px;border-radius:2px;letter-spacing:.04em;margin-top:1px}
+.pb-reddit{background:rgba(255,87,34,.13);color:var(--reddit)}
+.pb-hackernews{background:rgba(245,166,35,.13);color:var(--hn)}
+.pb-bluesky{background:rgba(29,155,240,.13);color:var(--bsky)}
+.pb-youtube{background:rgba(230,57,70,.13);color:var(--yt)}
+.sig-title{font-size:11px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.sig-r2{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)}
+.ttag{color:var(--green);border:1px solid rgba(0,201,122,.28);padding:1px 4px;border-radius:2px;font-size:7px;letter-spacing:.06em}
+
+/* TRENDING col2 row1 */
+.trending{grid-column:2;grid-row:1}
+.trend-pb{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 10px 8px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.trend-pb::-webkit-scrollbar{width:3px}
+.trend-pb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.thead{display:grid;grid-template-columns:130px 1fr 60px 72px 58px;gap:8px;padding:8px 10px 6px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2}
+.th{font-size:7px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.th-r{text-align:right}
+.trows{display:flex;flex-direction:column;gap:4px;padding-top:6px}
+.trow{display:grid;grid-template-columns:130px 1fr 60px 72px 58px;gap:8px;align-items:center;padding:7px 9px;background:var(--bg2);border-radius:3px;border:1px solid var(--border);cursor:default;transition:border-color .15s}
+.trow:hover{border-color:var(--border2)}
+.t-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-bar-w{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.t-bar{height:100%;border-radius:2px;transition:width .6s ease}
+.t-score{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--yellow);text-align:right}
+.pdots{display:flex;gap:3px;justify-content:flex-end}
+.pdot{width:7px;height:7px;border-radius:50%}
+.cross-b{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--green);border:1px solid rgba(0,201,122,.28);padding:1px 5px;border-radius:2px;letter-spacing:.06em;white-space:nowrap}
+.single-b{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--muted);padding:1px 5px;white-space:nowrap}
+
+/* PROPAGATION col2 row2 */
+.prop{grid-column:2;grid-row:2}
+.prop-inner{display:flex;gap:8px;height:100%;align-items:stretch}
+.prop-card{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.prop-tname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prop-tl{display:flex;align-items:flex-start}
+.prop-node{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.prop-node:not(:last-child)::after{content:'';position:absolute;top:4px;left:50%;right:-50%;height:1px;background:var(--border2)}
+.prop-circle{width:9px;height:9px;border-radius:50%;border:1.5px solid;position:relative;z-index:2}
+.prop-pname{font-size:7px;letter-spacing:.04em;margin-top:1px}
+.prop-mark{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--muted)}
+.prop-hl{font-size:9px;color:var(--muted);line-height:1.35;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;border-top:1px solid var(--border);padding-top:5px}
+.prop-stats{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--muted)}
+.prop-stats b{color:var(--green)}
+
+/* HEALTH col3 row1 */
+.health{grid-column:3;grid-row:1}
+.pf-card{padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;margin-bottom:7px}
+.pf-card:last-child{margin-bottom:0}
+.pf-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.pf-name{font-size:8px;font-weight:600;letter-spacing:.1em}
+.pf-num{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;line-height:1}
+.pf-sub{font-size:8px;color:var(--muted);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-bar-w{height:2px;background:var(--bg3);border-radius:1px}
+.pf-bar{height:100%;border-radius:1px}
+
+/* SENTIMENT col3 row2 */
+.sent-col{grid-column:3;grid-row:2}
+.sent-item{padding:5px 0;border-bottom:1px solid var(--border)}
+.sent-item:last-child{border-bottom:none}
+.sent-name{font-size:10px;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sent-row{display:flex;align-items:center;gap:6px}
+.sent-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.sent-fill{height:100%;border-radius:2px}
+.sent-val{font-family:'JetBrains Mono',monospace;font-size:8px;width:30px;text-align:right;flex-shrink:0}
+
+/* TICKER */
+.ticker{flex-shrink:0;height:26px;border-top:1px solid var(--border);display:flex;align-items:center;overflow:hidden}
+.ticker-lbl{flex-shrink:0;padding:0 11px;font-size:7px;letter-spacing:.14em;color:var(--muted);border-right:1px solid var(--border);height:100%;display:flex;align-items:center}
+.ticker-scroll{flex:1;overflow:hidden}
+.ticker-inner{display:flex;gap:24px;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:9px;animation:scroll 50s linear infinite}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{color:var(--muted)}
+.ti b{color:var(--text)}
+.up{color:var(--green)}
+.dn{color:var(--yt)}
+
+.loading{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:16px 0;text-align:center}
+.err{color:var(--yt);font-family:'JetBrains Mono',monospace;font-size:9px;padding:8px 0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">SIGNAL<em>FLOW</em></div>
+  <div class="topbar-right">
+    <div class="kpi"><div class="kpi-val" id="kpi-signals">1,206,606</div><div class="kpi-lbl">total signals</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-topics">—</div><div class="kpi-lbl">topics / hr</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-cross">—</div><div class="kpi-lbl">cross-platform</div></div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div id="clock"></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="panel feed">
+    <div class="ph">
+      <span class="pt">live signal feed</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)" id="feed-age"></span>
+    </div>
+    <div class="pb" id="feed-body"><div class="loading">connecting…</div></div>
+  </div>
+
+  <div class="panel trending">
+    <div class="ph">
+      <span class="pt">trending topics · 60 min</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)" id="trend-age"></span>
+    </div>
+    <div class="trend-pb">
+      <div class="thead">
+        <div class="th">topic</div>
+        <div class="th">signal velocity</div>
+        <div class="th th-r">score</div>
+        <div class="th th-r">platforms</div>
+        <div class="th th-r">type</div>
+      </div>
+      <div class="trows" id="trows"><div class="loading">loading…</div></div>
+    </div>
+  </div>
+
+  <div class="panel health">
+    <div class="ph"><span class="pt">platform health</span></div>
+    <div class="pb" id="health-body"><div class="loading">loading…</div></div>
+  </div>
+
+  <div class="panel prop">
+    <div class="ph">
+      <span class="pt">cross-platform propagation</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)">topics on 2+ platforms</span>
+    </div>
+    <div class="pb" id="prop-body"><div class="loading">loading…</div></div>
+  </div>
+
+  <div class="panel sent-col">
+    <div class="ph"><span class="pt">sentiment radar</span></div>
+    <div class="pb" id="sent-body"><div class="loading">loading…</div></div>
+  </div>
+
+</div>
+
+<div class="ticker">
+  <div class="ticker-lbl">TRENDING NOW</div>
+  <div class="ticker-scroll">
+    <div class="ticker-inner" id="ticker-inner"><span class="ti">loading…</span></div>
+  </div>
+</div>
+
+<script>
+var PFC={reddit:'#ff5722',hackernews:'#f5a623',bluesky:'#1d9bf0',youtube:'#e63946'};
+var PFS={reddit:'RDT',hackernews:'HN',bluesky:'BSK',youtube:'YT'};
+var PFCLS={reddit:'pb-reddit',hackernews:'pb-hackernews',bluesky:'pb-bluesky',youtube:'pb-youtube'};
+var PF_TOTALS={reddit:62700,hackernews:4550,bluesky:496000,youtube:32000};
+var PF_RATES={reddit:'~180/hr',hackernews:'~30/hr',bluesky:'~2400/hr',youtube:'~800/4hr'};
+var sigCount=1206606;
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function ago(iso){var d=(Date.now()-new Date(iso))/1000;if(d<60)return Math.round(d)+'s';if(d<3600)return Math.round(d/60)+'m';return Math.round(d/3600)+'h'}
+function fmt(n){return n>=1000?(n/1000).toFixed(0)+'K':String(n)}
+
+function tick(){document.getElementById('clock').textContent=new Date().toISOString().replace('T',' ').slice(0,19)+' UTC'}
+setInterval(tick,1000);tick();
+setInterval(function(){sigCount+=Math.floor(Math.random()*4+1);document.getElementById('kpi-signals').textContent=sigCount.toLocaleString()},4000);
+
+function get(path){return fetch(path,{headers:{Accept:'application/json'}}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})}
+
+function sigText(s){
+  var t=(s.title||'').trim();if(t)return t;
+  var clean=(s.body||'').replace(/https?:\/\/\S+/g,'').trim();
+  return clean.length>8?clean.slice(0,140)+(clean.length>140?'...':''):(s.url||'(no content)');
+}
+
+function loadFeed(){
+  get('/api/v1/signals/?limit=50&ordering=-first_seen_at').then(function(data){
+    var sigs=data.results||data||[];
+    document.getElementById('feed-body').innerHTML=sigs.slice(0,35).map(function(s){
+      var isTr=s.is_trending||(parseFloat(s.trending_score||0)>0.3);
+      var vel=s.score_velocity!=null?parseFloat(s.score_velocity).toFixed(3):'--';
+      var sc=s.raw_score!=null?parseInt(s.raw_score).toLocaleString():'--';
+      var t=s.first_seen_at?ago(s.first_seen_at):'--';
+      var pcls=PFCLS[s.platform]||'pb-bluesky';
+      var ps=PFS[s.platform]||(s.platform||'?').slice(0,3).toUpperCase();
+      return'<div class="sig"><div class="sig-r1"><span class="pbadge '+pcls+'">'+ps+'</span><span class="sig-title">'+esc(sigText(s))+'</span></div><div class="sig-r2"><span>'+sc+' pts</span><span>vel '+vel+'</span><span>'+t+' ago</span>'+(isTr?'<span class="ttag">TRENDING</span>':'')+'</div></div>';
+    }).join('');
+    document.getElementById('feed-age').textContent='updated '+new Date().toISOString().slice(11,19)+'z';
+  }).catch(function(e){document.getElementById('feed-body').innerHTML='<div class="err">feed: '+e.message+'</div>'});
+}
+
+function loadTrending(){
+  get('/api/v1/trending/?platform=all&window=60&limit=25').then(function(data){
+    var topics=data.topics||[];
+    document.getElementById('kpi-topics').textContent=topics.length;
+    document.getElementById('kpi-cross').textContent=topics.filter(function(t){return t.cross_platform}).length;
+    document.getElementById('trend-age').textContent=(data.generated_at||'').slice(11,19)+'z';
+    renderTrending(topics);renderProp(topics);renderSentiment(topics);renderTicker(topics);renderHealth(topics);
+  }).catch(function(e){document.getElementById('trows').innerHTML='<div class="err">trending: '+e.message+'</div>'});
+}
+
+function renderTrending(topics){
+  if(!topics.length){document.getElementById('trows').innerHTML='<div class="loading">no data</div>';return}
+  var max=topics[0].trend_score||1;
+  document.getElementById('trows').innerHTML=topics.slice(0,18).map(function(t){
+    var pct=((t.trend_score/max)*100).toFixed(1);
+    var col=t.cross_platform?'#00c97a':'#4a4a55';
+    var dots=(t.platforms||[]).map(function(p){return'<div class="pdot" style="background:'+(PFC[p]||'#555')+'" title="'+p+'"></div>'}).join('');
+    return'<div class="trow"><div class="t-name">'+esc(t.topic)+'</div><div class="t-bar-w"><div class="t-bar" style="width:'+pct+'%;background:'+col+'"></div></div><div class="t-score">'+Math.round(t.trend_score)+'</div><div class="pdots">'+dots+'</div><div>'+(t.cross_platform?'<span class="cross-b">CROSS</span>':'<span class="single-b">SINGLE</span>')+'</div></div>';
+  }).join('');
+}
+
+function renderProp(topics){
+  var cross=topics.filter(function(t){return t.cross_platform&&(t.platforms||[]).length>=2}).slice(0,4);
+  var el=document.getElementById('prop-body');
+  if(!cross.length){el.innerHTML='<div class="loading">no cross-platform events yet</div>';return}
+  var ALL=['reddit','hackernews','bluesky','youtube'];
+  el.innerHTML='<div class="prop-inner">'+cross.map(function(t){
+    var pfs=t.platforms||[];
+    var hl=((t.sample_signals||[]).find(function(s){return s.title&&s.title.trim()})||{}).title||'';
+    var nodes=ALL.map(function(pf){
+      var present=pfs.indexOf(pf)>=0;var isFirst=pf===pfs[0];
+      var bg=present?PFC[pf]:'transparent';var bc=present?PFC[pf]:'rgba(255,255,255,.08)';
+      return'<div class="prop-node"><div class="prop-circle" style="background:'+bg+';border-color:'+bc+';opacity:'+(present?1:.25)+'"></div><div class="prop-pname" style="color:'+(present?PFC[pf]:'#4a4a55')+'">'+PFS[pf]+'</div><div class="prop-mark">'+(isFirst?'O':present?'+':'--')+'</div></div>';
+    }).join('');
+    return'<div class="prop-card"><div class="prop-tname">'+esc(t.topic)+'</div><div class="prop-tl">'+nodes+'</div>'+(hl?'<div class="prop-hl">'+esc(hl)+'</div>':'')+'<div class="prop-stats"><span>signals <b>'+t.signal_count+'</b></span><span>on <b>'+pfs.length+'</b> platforms</span></div></div>';
+  }).join('')+'</div>';
+}
+
+function renderHealth(topics){
+  var byPf={};
+  topics.forEach(function(t){(t.platforms||[]).forEach(function(p){byPf[p]=(byPf[p]||0)+1})});
+  document.getElementById('health-body').innerHTML=['reddit','hackernews','bluesky','youtube'].map(function(p){
+    var cnt=byPf[p]||0;
+    var top=(topics.find(function(t){return(t.platforms||[]).indexOf(p)>=0})||{}).topic||'';
+    var pct=Math.min(100,cnt*4);
+    return'<div class="pf-card"><div class="pf-top"><div class="pf-name" style="color:'+PFC[p]+'">'+p.toUpperCase()+'</div><div class="pf-num" style="color:'+PFC[p]+'">'+fmt(PF_TOTALS[p])+'</div></div><div class="pf-sub">'+PF_RATES[p]+' &middot; '+cnt+' topics active</div>'+(top?'<div class="pf-sub" style="color:#dcdcdc">+ '+esc(top)+'</div>':'')+'<div class="pf-bar-w"><div class="pf-bar" style="width:'+pct+'%;background:'+PFC[p]+';opacity:.55"></div></div></div>';
+  }).join('');
+}
+
+function renderSentiment(topics){
+  document.getElementById('sent-body').innerHTML=topics.slice(0,8).map(function(t){
+    var s=t.avg_sentiment||0;
+    var col=s>0.05?'#00c97a':s<-0.05?'#e63946':'#4a4a55';
+    var pct=(Math.abs(s)*100).toFixed(1);
+    return'<div class="sent-item"><div class="sent-name">'+esc(t.topic)+'</div><div class="sent-row"><div class="sent-track"><div class="sent-fill" style="width:'+pct+'%;background:'+col+'"></div></div><div class="sent-val" style="color:'+col+'">'+(s>0?'+':'')+s.toFixed(2)+'</div></div></div>';
+  }).join('');
+}
+
+function renderTicker(topics){
+  var items=topics.slice(0,20).map(function(t){
+    var v=t.avg_velocity||0;var cl=v>0.001?'up':v<-0.001?'dn':'';
+    return'<span class="ti"><b>'+esc(t.topic)+'</b> <span class="'+cl+'">'+(v>=0?'+':'')+v.toFixed(4)+'</span> <span style="opacity:.3">|</span> '+t.signal_count+' signals</span>';
+  });
+  var d=items.concat(items).join('');
+  document.getElementById('ticker-inner').innerHTML=d;
+}
+
+loadFeed();loadTrending();
+setInterval(loadFeed,30000);setInterval(loadTrending,60000);
+</script>
+</body>
+</html>

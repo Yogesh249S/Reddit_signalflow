@@ -9,11 +9,11 @@ All endpoints under /api/v1/ — clean versioned namespace.
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
+from .views import (request_api_access, 
     home, health,
     SignalViewSet,
     PulseView, TrendingView, CompareView,
-    stats, stats_timeline, stats_keywords,
+    stats, stats_timeline, stats_keywords, platform_totals,
 )
 
 router = DefaultRouter()
@@ -35,4 +35,7 @@ urlpatterns = [
     path("stats/",           stats,           name="stats"),
     path("stats/timeline/",  stats_timeline,  name="stats-timeline"),
     path("stats/keywords/",  stats_keywords,  name="stats-keywords"),
+    path("stats/totals/",   platform_totals, name="stats-totals"),
+    #path ("stats/totals/",  platform_totals   name ="platform-totals")
+    path("access/request/", request_api_access, name="access-request"),
 ]

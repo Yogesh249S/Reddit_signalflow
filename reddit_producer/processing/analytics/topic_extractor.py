@@ -111,7 +111,103 @@ NOISE_ENTITIES = {
     "make", "take", "give", "come", "know", "think",
     # Places too broad to be useful signals
     "us", "uk", "eu", "usa", "world", "internet",
+    # Abbreviations and stopwords that spaCy extracts as named entities
+    "un", "gop", "nato", "cdt", "pst", "est", "gmt", "utc",
+    "bc", "ad", "pm", "am", "st", "nd", "rd", "th",
+    "co", "inc", "ltd", "llc", "gov", "org", "corp",
+    "rt", "via", "re", "cc", "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+    "afd", "aita", "tldr", "imo", "imho", "fyi", "tbh",
+    # YouTube channel names that leak through as entities
+    "dw news", "bbc news", "bbc newscast", "al jazeera", "sky news",
+    "abc news", "cnn", "msnbc", "fox news", "nbc news", "cbs news",
+    "pbs news", "npr", "c-span", "euronews",
+    # Weather bot boilerplate
+    "iembot", "nws", "noaa",
+    # Generic media terms
+    "news", "breaking", "watch", "live", "update", "report",
 }
+
+# ── Canonical topic map ───────────────────────────────────────────────────────
+# Merges morphological variants and aliases into a single canonical topic.
+# Applied AFTER extraction so signal counts are aggregated correctly.
+# Keys are lowercased extracted strings → value is the canonical form.
+# Rules of thumb:
+#   - Demonyms → country name  (iranian → iran, american → america)
+#   - Plural/adjective forms → base noun  (israelis → israel)
+#   - Named-entity aliases → primary name  (donald trump → trump)
+#   - Media brand variants → canonical brand  (bbc news → bbc)
+CANONICAL_MAP: dict[str, str] = {
+    # Iran cluster
+    "iranian":          "iran",
+    "iranians":         "iran",
+
+    # America cluster
+    "american":         "america",
+    "americans":        "america",
+    "u.s.":             "america",
+    "united states":    "america",
+    "the united states":"america",
+
+    # Israel cluster
+    "israeli":          "israel",
+    "israelis":         "israel",
+
+    # Russia cluster
+    "russian":          "russia",
+    "russians":         "russia",
+
+    # China cluster
+    "chinese":          "china",
+
+    # Ukraine cluster
+    "ukrainian":        "ukraine",
+    "ukrainians":       "ukraine",
+
+    # UK cluster
+    "british":          "uk",
+    "britain":          "uk",
+    "england":          "uk",
+    "english":          "uk",
+
+    # People aliases
+    "donald trump":     "trump",
+    "biden":            "joe biden",
+
+    # Media aliases
+    "bbc news":         "bbc",
+    "bbc newscast":     "bbc",
+    "al jazeera":       "aljazeera",
+
+    # Common political terms
+    "democrat":         "democrats",
+    "republican":       "republicans",
+    "gop":              "republicans",
+}
+
+
+def _canonicalise(topic: str) -> str:
+    """Return the canonical form of a topic, or the topic itself if not mapped."""
+    return CANONICAL_MAP.get(topic, topic)
+
+
+# ── Noise patterns — checked against full entity string ──────────────────────
+# For patterns that can't be caught by exact set lookup
+import re as _re
+_NOISE_PATTERNS = _re.compile(
+    r'^(the |a |an |\d+$|https?://|\w{1,2}$)',
+    _re.IGNORECASE,
+)
+
+def _is_noise(text: str) -> bool:
+    """Return True if the entity should be filtered out."""
+    if text in NOISE_ENTITIES:
+        return True
+    if _NOISE_PATTERNS.match(text):
+        return True
+    # filter carriage returns (weather bot multiline garbage)
+    if '\r' in text or '\n' in text or len(text) > 40:
+        return True
+    return False
 
 # ── Model loader ──────────────────────────────────────────────────────────────
 _nlp = None
@@ -198,9 +294,10 @@ def extract_topics(text: str, max_topics: int = 8) -> list[str]:
                 continue
 
             normalised = ent.text.strip().lower()
+            normalised = _canonicalise(normalised)
 
             # Skip noise, short tokens, numeric-only
-            if (normalised in NOISE_ENTITIES
+            if (_is_noise(normalised)
                     or len(normalised) < 2
                     or normalised.isdigit()
                     or normalised in seen):
@@ -249,6 +346,7 @@ def extract_topics_batch(texts: list[str], max_topics: int = 8) -> list[list[str
                 if ent.label_ not in RELEVANT_LABELS:
                     continue
                 normalised = ent.text.strip().lower()
+                normalised = _canonicalise(normalised)
                 if (normalised in NOISE_ENTITIES
                         or len(normalised) < 2
                         or normalised.isdigit()

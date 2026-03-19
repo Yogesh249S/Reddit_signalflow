@@ -196,7 +196,7 @@ def flush_signal_batch(signal_batch: list[dict]) -> None:
             sig["trending_score"]   = trending_score
             sig["is_trending"]      = is_trending
 
-            if score_vel != 0.0 or comment_vel != 0.0:
+            if score_vel != 0.0 or comment_vel != 0.0 or sig.get("trending_score", 0.0) > 0.0:
                 enriched.append(sig)
 
         # ── Step 6: Write enriched signals + metrics history ──────────────────

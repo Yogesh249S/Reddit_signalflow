@@ -3,1650 +3,585 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignalFlow — Social Signal Intelligence API</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<title>SignalFlow — Cross-Platform Signal Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-:root {
-  --bg:      #080c10;
-  --bg2:     #0d1219;
-  --bg3:     #111820;
-  --border:  rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text:    #e8edf2;
-  --muted:   #5a6a7a;
-  --dim:     #2a3a4a;
-
-  --blue:    #2979ff;
-  --blue-g:  #1a5fd4;
-  --cyan:    #00e5ff;
-  --green:   #00e676;
-  --red:     #ff1744;
-  --amber:   #ffab00;
-  --purple:  #d500f9;
-
-  --mono: 'DM Mono', monospace;
-  --sans: 'Sora', sans-serif;
-  --r: 8px;
-}
-
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-weight: 400;
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-/* scanline texture */
-body::after {
-  content:'';
-  position:fixed; inset:0; pointer-events:none; z-index:999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.015) 2px,
-    rgba(0,0,0,0.015) 4px
-  );
-}
-
-/* ── NAV ── */
-nav {
-  position:fixed; top:0; left:0; right:0; z-index:100;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 56px; height:58px;
-  background:rgba(8,12,16,0.8);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
-}
-
-.logo {
-  font-family:var(--sans); font-size:17px; font-weight:700;
-  letter-spacing:-0.5px; color:var(--text);
-  display:flex; align-items:center; gap:9px;
-}
-.logo-dot {
-  width:7px; height:7px; border-radius:50%;
-  background:var(--blue);
-  box-shadow: 0 0 8px var(--blue);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-  0%,100% { box-shadow:0 0 8px var(--blue), 0 0 0 0 rgba(41,121,255,0.4); }
-  50%      { box-shadow:0 0 12px var(--blue), 0 0 0 6px rgba(41,121,255,0); }
-}
-
-.nav-right { display:flex; align-items:center; gap:28px; }
-.nav-links { display:flex; gap:24px; list-style:none; }
-.nav-links a {
-  font-size:13px; color:var(--muted); text-decoration:none;
-  font-weight:500; letter-spacing:0.2px; transition:color 0.15s;
-}
-.nav-links a:hover { color:var(--text); }
-
-.btn {
-  display:inline-flex; align-items:center; gap:7px;
-  padding:8px 20px; border-radius:var(--r);
-  font-family:var(--sans); font-size:13px; font-weight:600;
-  cursor:pointer; text-decoration:none; transition:all 0.18s;
-  letter-spacing:0.1px; border:none;
-}
-.btn-primary {
-  background:var(--blue); color:#fff;
-}
-.btn-primary:hover { background:var(--blue-g); transform:translateY(-1px); box-shadow:0 4px 20px rgba(41,121,255,0.3); }
-.btn-ghost {
-  background:transparent; color:var(--text);
-  border:1px solid var(--border2);
-}
-.btn-ghost:hover { border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.04); }
-
-/* ── HERO ── */
-.hero {
-  min-height:100vh; padding-top:58px;
-  display:grid; grid-template-columns:1fr 1fr;
-  position:relative; overflow:hidden;
-}
-
-/* grid bg */
-.hero::before {
-  content:'';
-  position:absolute; inset:0;
-  background-image:
-    linear-gradient(rgba(41,121,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(41,121,255,0.04) 1px, transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
-}
-
-/* glow */
-.hero::after {
-  content:'';
-  position:absolute; top:10%; left:10%; width:500px; height:500px;
-  background:radial-gradient(circle, rgba(41,121,255,0.08) 0%, transparent 70%);
-  pointer-events:none;
-}
-
-.hero-left {
-  display:flex; flex-direction:column; justify-content:center;
-  padding:80px 64px 80px 80px;
-  position:relative; z-index:2;
-}
-
-.hero-eyebrow {
-  display:inline-flex; align-items:center; gap:8px;
-  background:rgba(41,121,255,0.08); border:1px solid rgba(41,121,255,0.2);
-  border-radius:20px; padding:5px 14px;
-  font-family:var(--mono); font-size:11px; color:var(--blue);
-  letter-spacing:0.5px; margin-bottom:28px; width:fit-content;
-}
-.eyebrow-dot {
-  width:5px; height:5px; border-radius:50%;
-  background:var(--blue); animation:pulse-dot 2s ease-in-out infinite;
-}
-
-h1 {
-  font-size:54px; font-weight:700; line-height:1.1;
-  letter-spacing:-2px; margin-bottom:24px; color:#fff;
-}
-h1 em { font-style:normal; color:var(--blue); }
-
-.hero-sub {
-  font-size:17px; color:var(--muted); line-height:1.7;
-  max-width:460px; margin-bottom:40px; font-weight:400;
-}
-.hero-sub strong { color:var(--text); font-weight:500; }
-
-.hero-ctas { display:flex; align-items:center; gap:14px; margin-bottom:56px; }
-
-.hero-stats {
-  display:flex; gap:0;
-  border:1px solid var(--border); border-radius:var(--r);
-  overflow:hidden; width:fit-content;
-}
-.h-stat {
-  padding:14px 24px; border-right:1px solid var(--border);
-  display:flex; flex-direction:column; gap:3px;
-}
-.h-stat:last-child { border-right:none; }
-.h-stat-val {
-  font-size:22px; font-weight:700; color:#fff;
-  font-family:var(--mono); letter-spacing:-1px;
-}
-.h-stat-val span { color:var(--blue); }
-.h-stat-label { font-size:10px; color:var(--muted); font-weight:500; letter-spacing:0.8px; text-transform:uppercase; }
-
-/* ── SIGNAL FEED (hero right) ── */
-.hero-right {
-  display:flex; align-items:center; justify-content:center;
-  padding:80px 80px 80px 32px;
-  position:relative; z-index:2;
-}
-
-.feed-terminal {
-  width:100%; max-width:500px;
-  background:var(--bg2);
-  border:1px solid var(--border2);
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 0 0 1px rgba(41,121,255,0.1), 0 24px 64px rgba(0,0,0,0.5);
-}
-
-.terminal-bar {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 16px;
-  border-bottom:1px solid var(--border);
-  background:var(--bg3);
-}
-.terminal-dots { display:flex; gap:6px; }
-.terminal-dot { width:10px; height:10px; border-radius:50%; }
-.terminal-title {
-  font-family:var(--mono); font-size:11px; color:var(--muted);
-  letter-spacing:0.5px;
-}
-.live-badge {
-  display:flex; align-items:center; gap:5px;
-  font-family:var(--mono); font-size:10px; color:var(--green);
-  letter-spacing:0.5px;
-}
-.live-badge::before {
-  content:'';
-  width:5px; height:5px; border-radius:50%;
-  background:var(--green);
-  animation:pulse-dot 1.5s ease-in-out infinite;
-}
-
-.terminal-header {
-  display:grid;
-  grid-template-columns:1fr 80px 70px 80px 60px;
-  padding:8px 16px;
-  border-bottom:1px solid var(--border);
-  gap:8px;
-}
-.th-col {
-  font-family:var(--mono); font-size:9px; color:var(--muted);
-  font-weight:500; letter-spacing:0.8px; text-transform:uppercase;
-}
-
-.signal-feed { padding:6px 0; }
-
-.signal-row {
-  display:grid;
-  grid-template-columns:1fr 80px 70px 80px 60px;
-  padding:9px 16px; gap:8px;
-  border-bottom:1px solid rgba(255,255,255,0.03);
-  align-items:center;
-  animation:row-in 0.4s ease forwards;
-  opacity:0;
-  transition:background 0.15s;
-}
-.signal-row:hover { background:rgba(255,255,255,0.02); }
-
-@keyframes row-in {
-  from { opacity:0; transform:translateX(-6px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-
-.s-topic { font-size:12px; font-weight:500; color:var(--text); display:flex; align-items:center; gap:7px; }
-.s-topic-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
-
-.platform-stack { display:flex; gap:3px; }
-.plt {
-  font-family:var(--mono); font-size:8px; font-weight:500;
-  padding:2px 5px; border-radius:3px; letter-spacing:0.3px;
-}
-.plt-r  { background:rgba(255,69,0,0.15);  color:#ff6b3d; }
-.plt-h  { background:rgba(255,102,0,0.15); color:#ff9a4d; }
-.plt-b  { background:rgba(0,149,255,0.15); color:#4db8ff; }
-.plt-y  { background:rgba(255,0,0,0.12);   color:#ff5252; }
-
-.s-velocity {
-  font-family:var(--mono); font-size:11px; font-weight:500;
-  display:flex; align-items:center; gap:3px;
-}
-.vel-up   { color:var(--green); }
-.vel-down { color:var(--red); }
-
-.s-sentiment {
-  display:flex; align-items:center;
-}
-.sent-bar {
-  height:4px; border-radius:2px;
-  background:var(--dim); width:52px; position:relative; overflow:hidden;
-}
-.sent-fill { height:100%; border-radius:2px; position:absolute; top:0; left:0; }
-.sent-pos { background:var(--green); }
-.sent-neg { background:var(--red); }
-.sent-neu { background:var(--amber); }
-
-.s-platforms { font-family:var(--mono); font-size:10px; color:var(--muted); }
-
-.s-trending {
-  display:flex; align-items:center; justify-content:flex-end;
-}
-.trend-badge {
-  font-family:var(--mono); font-size:9px; font-weight:500;
-  padding:2px 7px; border-radius:3px; letter-spacing:0.3px;
-}
-.trend-hot  { background:rgba(255,171,0,0.12); color:var(--amber); border:1px solid rgba(255,171,0,0.2); }
-.trend-new  { background:rgba(0,230,118,0.1);  color:var(--green); border:1px solid rgba(0,230,118,0.2); }
-.trend-cold { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
-
-.terminal-footer {
-  padding:10px 16px;
-  border-top:1px solid var(--border);
-  display:flex; justify-content:space-between; align-items:center;
-  background:var(--bg3);
-}
-.tf-left { font-family:var(--mono); font-size:10px; color:var(--muted); }
-.tf-right { font-family:var(--mono); font-size:10px; color:var(--blue); }
-
-/* ── TICKER BAR ── */
-.ticker-wrap {
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  background:var(--bg2);
-  overflow:hidden; height:38px; display:flex; align-items:center;
-  position:relative; z-index:10;
-}
-.ticker-label {
-  flex-shrink:0; padding:0 20px;
-  font-family:var(--mono); font-size:10px; color:var(--blue);
-  background:var(--bg2); font-weight:500; letter-spacing:0.5px;
-  border-right:1px solid var(--border); height:100%;
-  display:flex; align-items:center; z-index:2;
-}
-.ticker-track {
-  display:flex; gap:0; white-space:nowrap;
-  animation:ticker 28s linear infinite;
-}
-@keyframes ticker {
-  from { transform:translateX(0); }
-  to   { transform:translateX(-50%); }
-}
-.tick-item {
-  display:inline-flex; align-items:center; gap:8px;
-  padding:0 28px; border-right:1px solid var(--border);
-  height:38px; font-family:var(--mono); font-size:11px;
-}
-.tick-topic { color:var(--text); font-weight:500; }
-.tick-vel   { color:var(--green); font-size:10px; }
-.tick-neg   { color:var(--red); font-size:10px; }
-.tick-plts  { color:var(--muted); font-size:10px; }
-
-/* ── SECTION BASE ── */
-section { position:relative; z-index:1; }
-
-.section-label {
-  font-family:var(--mono); font-size:11px; font-weight:500;
-  color:var(--blue); letter-spacing:1px; text-transform:uppercase;
-  margin-bottom:16px; display:flex; align-items:center; gap:10px;
-}
-.section-label::after {
-  content:''; flex:1; height:1px; background:var(--border);
-}
-
-.section-title {
-  font-size:38px; font-weight:700; letter-spacing:-1.5px;
-  color:#fff; line-height:1.15; margin-bottom:16px;
-}
-.section-sub {
-  font-size:16px; color:var(--muted); line-height:1.7;
-  max-width:520px; font-weight:400;
-}
-
-/* ── PROBLEM SECTION ── */
-.problem {
-  padding:100px 80px;
-  border-bottom:1px solid var(--border);
-}
-
-.problem-grid {
-  display:grid; grid-template-columns:1fr 1fr; gap:80px;
-  margin-top:60px; align-items:start;
-}
-
-.problem-cards { display:flex; flex-direction:column; gap:16px; }
-.problem-card {
-  padding:20px 24px;
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  background:var(--bg2);
-  display:flex; gap:16px; align-items:flex-start;
-}
-.p-icon {
-  width:36px; height:36px; border-radius:8px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:16px;
-}
-.p-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:4px; }
-.p-desc  { font-size:13px; color:var(--muted); line-height:1.6; }
-
-.problem-right { padding-top:12px; }
-.problem-right .section-title { font-size:32px; }
-.problem-quote {
-  margin-top:32px; padding:24px;
-  border-left:3px solid var(--blue);
-  background:rgba(41,121,255,0.04);
-  border-radius:0 8px 8px 0;
-}
-.pq-text { font-size:15px; line-height:1.7; color:var(--text); font-style:italic; margin-bottom:12px; }
-.pq-source { font-family:var(--mono); font-size:11px; color:var(--muted); }
-
-/* ── HOW IT WORKS ── */
-.how {
-  padding:100px 80px;
-  border-bottom:1px solid var(--border);
-}
-
-.how-grid {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
-  background:var(--border); border:1px solid var(--border);
-  border-radius:12px; overflow:hidden; margin-top:60px;
-}
-
-.how-step {
-  background:var(--bg);
-  padding:36px 32px;
-  position:relative;
-}
-.how-step:hover { background:var(--bg2); }
-
-.step-num {
-  font-family:var(--mono); font-size:11px; color:var(--blue);
-  font-weight:500; margin-bottom:20px; letter-spacing:0.5px;
-}
-.step-icon { font-size:28px; margin-bottom:16px; }
-.step-title { font-size:16px; font-weight:600; color:#fff; margin-bottom:10px; }
-.step-desc { font-size:13px; color:var(--muted); line-height:1.65; }
-
-/* ── ENDPOINTS ── */
-.endpoints {
-  padding:100px 80px;
-  border-bottom:1px solid var(--border);
-}
-
-.endpoints-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:60px; align-items:start; }
-
-.ep-list { display:flex; flex-direction:column; gap:10px; }
-
-.ep-card {
-  display:flex; align-items:flex-start; gap:14px;
-  padding:16px 20px;
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  background:var(--bg2);
-  cursor:pointer; transition:all 0.18s;
-}
-.ep-card:hover { border-color:var(--border2); background:var(--bg3); }
-.ep-card.active { border-color:rgba(41,121,255,0.4); background:rgba(41,121,255,0.06); }
-
-.ep-method {
-  font-family:var(--mono); font-size:10px; font-weight:500;
-  padding:3px 8px; border-radius:4px; flex-shrink:0; margin-top:1px;
-  letter-spacing:0.5px;
-}
-.m-get { background:rgba(0,230,118,0.1); color:var(--green); border:1px solid rgba(0,230,118,0.2); }
-.m-ws  { background:rgba(0,229,255,0.1); color:var(--cyan); border:1px solid rgba(0,229,255,0.2); }
-.m-post{ background:rgba(255,171,0,0.1); color:var(--amber); border:1px solid rgba(255,171,0,0.2); }
-
-.ep-info {}
-.ep-path { font-family:var(--mono); font-size:13px; color:var(--text); font-weight:500; margin-bottom:4px; }
-.ep-desc { font-size:12px; color:var(--muted); line-height:1.5; }
-
-.code-panel {
-  background:var(--bg2); border:1px solid var(--border2);
-  border-radius:12px; overflow:hidden;
-  box-shadow:0 16px 48px rgba(0,0,0,0.4);
-  position:sticky; top:80px;
-}
-.cp-bar {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 16px; border-bottom:1px solid var(--border);
-  background:var(--bg3);
-}
-.cp-lang { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.5px; }
-.cp-copy {
-  font-family:var(--mono); font-size:10px; color:var(--blue);
-  cursor:pointer; border:none; background:none; letter-spacing:0.5px;
-}
-.cp-copy:hover { color:var(--cyan); }
-pre {
-  padding:20px; font-family:var(--mono); font-size:12px;
-  line-height:1.8; overflow-x:auto; color:#c9d1d9;
-}
-.kw  { color:#ff79c6; }
-.str { color:#f1fa8c; }
-.fn  { color:#50fa7b; }
-.cm  { color:#6272a4; font-style:italic; }
-.nu  { color:#bd93f9; }
-.k   { color:#8be9fd; }
-
-/* ── USE CASES ── */
-.usecases {
-  padding:100px 80px;
-  border-bottom:1px solid var(--border);
-}
-
-.uc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:60px; }
-
-.uc-card {
-  padding:32px 28px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:var(--bg2);
-  transition:all 0.2s;
-  position:relative; overflow:hidden;
-}
-.uc-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:var(--accent-color);
-  transform:scaleX(0); transform-origin:left;
-  transition:transform 0.3s;
-}
-.uc-card:hover { border-color:var(--border2); transform:translateY(-3px); }
-.uc-card:hover::before { transform:scaleX(1); }
-
-.uc-icon { font-size:32px; margin-bottom:20px; }
-.uc-title { font-size:16px; font-weight:600; color:#fff; margin-bottom:10px; }
-.uc-desc { font-size:13px; color:var(--muted); line-height:1.65; margin-bottom:20px; }
-.uc-tags { display:flex; flex-wrap:wrap; gap:6px; }
-.uc-tag {
-  font-family:var(--mono); font-size:10px;
-  padding:3px 9px; border-radius:4px;
-  background:rgba(255,255,255,0.04); color:var(--muted);
-  border:1px solid var(--border);
-}
-
-/* ── DIFFERENTIATORS ── */
-.diff {
-  padding:100px 80px;
-  border-bottom:1px solid var(--border);
-  background:var(--bg2);
-}
-
-.diff-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:60px; }
-
-.diff-table {
-  border:1px solid var(--border); border-radius:var(--r); overflow:hidden;
-}
-.diff-table-header {
-  display:grid; grid-template-columns:1fr 1fr 1fr;
-  background:var(--bg3); border-bottom:1px solid var(--border);
-}
-.dth { padding:12px 16px; font-size:12px; font-weight:600; color:var(--muted); letter-spacing:0.3px; }
-.dth.highlight { color:var(--blue); }
-
-.diff-row { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid var(--border); }
-.diff-row:last-child { border-bottom:none; }
-.diff-row:hover { background:rgba(255,255,255,0.01); }
-.dc { padding:12px 16px; font-size:12px; display:flex; align-items:center; gap:6px; }
-.dc-feature { color:var(--text); font-weight:500; }
-.dc-no  { color:var(--red); }
-.dc-yes { color:var(--green); }
-
-.diff-features { display:flex; flex-direction:column; gap:20px; padding-top:8px; }
-.diff-feat {
-  display:flex; gap:16px; align-items:flex-start;
-  padding:20px;
-  border:1px solid var(--border); border-radius:var(--r);
-  background:var(--bg);
-}
-.df-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
-.df-title { font-size:14px; font-weight:600; color:#fff; margin-bottom:5px; }
-.df-desc { font-size:12px; color:var(--muted); line-height:1.6; }
-
-/* ── PLATFORMS ── */
-.platforms {
-  padding:80px;
-  border-bottom:1px solid var(--border);
-}
-.platform-row {
-  display:flex; gap:0; margin-top:48px;
-  border:1px solid var(--border); border-radius:var(--r); overflow:hidden;
-}
-.platform-card {
-  flex:1; padding:28px 24px; border-right:1px solid var(--border);
-  display:flex; flex-direction:column; gap:10px;
-  transition:background 0.15s;
-}
-.platform-card:last-child { border-right:none; }
-.platform-card:hover { background:var(--bg2); }
-.pl-icon { font-size:28px; }
-.pl-name { font-size:14px; font-weight:600; color:#fff; }
-.pl-detail { font-size:12px; color:var(--muted); line-height:1.5; }
-.pl-stat {
-  font-family:var(--mono); font-size:11px; margin-top:6px;
-  display:flex; gap:10px; flex-wrap:wrap;
-}
-.pl-tag {
-  padding:2px 8px; border-radius:4px; border:1px solid var(--border);
-  color:var(--muted); font-size:10px;
-}
-
-/* ── CTA ── */
-.cta-section {
-  padding:120px 80px;
-  text-align:center; position:relative; overflow:hidden;
-}
-.cta-section::before {
-  content:'';
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:700px; height:400px;
-  background:radial-gradient(ellipse, rgba(41,121,255,0.08) 0%, transparent 70%);
-  pointer-events:none;
-}
-.cta-section h2 { font-size:44px; font-weight:700; letter-spacing:-1.5px; color:#fff; margin-bottom:16px; }
-.cta-section p { font-size:17px; color:var(--muted); margin-bottom:40px; max-width:480px; margin-left:auto; margin-right:auto; }
-.cta-group { display:flex; justify-content:center; gap:14px; }
-
-/* ── FOOTER ── */
-footer {
-  padding:40px 80px;
-  border-top:1px solid var(--border);
-  display:flex; justify-content:space-between; align-items:center;
-}
-.footer-left { font-family:var(--mono); font-size:12px; color:var(--muted); }
-.footer-links { display:flex; gap:24px; }
-.footer-links a { font-size:12px; color:var(--muted); text-decoration:none; transition:color 0.15s; }
-.footer-links a:hover { color:var(--text); }
-
-/* ── ANIMATIONS ── */
-.fade-up {
-  opacity:0; transform:translateY(20px);
-  transition:opacity 0.5s ease, transform 0.5s ease;
-}
-.fade-up.visible { opacity:1; transform:translateY(0); }
-
-/* ═══════════════════════════════════════════════
-   RESPONSIVE — tablet ≤ 900px
-═══════════════════════════════════════════════ */
-@media (max-width: 900px) {
-
-  /* Nav */
-  nav { padding: 0 24px; }
-  .nav-links { display: none; }
-  .nav-right { gap: 10px; }
-  .btn-ghost { display: none; }
-
-  /* Hero */
-  .hero {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-  .hero-left {
-    padding: 60px 24px 40px;
-  }
-  h1 { font-size: 38px; letter-spacing: -1.5px; }
-  .hero-sub { font-size: 15px; }
-  .hero-right {
-    padding: 0 24px 60px;
-    justify-content: flex-start;
-  }
-  .feed-terminal { max-width: 100%; }
-
-  /* Hero stats — 2×2 */
-  .hero-stats { width: 100%; }
-  .h-stat { flex: 1; padding: 12px 16px; }
-
-  /* Problem */
-  .problem { padding: 64px 24px; }
-  .problem-grid { grid-template-columns: 1fr; gap: 40px; }
-
-  /* How */
-  .how { padding: 64px 24px; }
-  .how-grid { grid-template-columns: 1fr; }
-
-  /* Endpoints */
-  .endpoints { padding: 64px 24px; }
-  .endpoints-grid { grid-template-columns: 1fr; }
-  .code-panel { position: static; }
-
-  /* Use cases — 2 col */
-  .usecases { padding: 64px 24px; }
-  .uc-grid { grid-template-columns: 1fr 1fr; }
-
-  /* Diff */
-  .diff { padding: 64px 24px; }
-  .diff-grid { grid-template-columns: 1fr; }
-
-  /* Platforms — 2×2 */
-  .platforms { padding: 64px 24px; }
-  .platform-row {
-    flex-wrap: wrap;
-  }
-  .platform-card {
-    flex: 1 1 calc(50% - 1px);
-    min-width: 0;
-  }
-
-  /* CTA */
-  .cta-section { padding: 80px 24px; }
-  .cta-section h2 { font-size: 32px; }
-  .cta-group { flex-direction: column; align-items: center; gap: 10px; }
-  .cta-group .btn { width: 100%; max-width: 320px; justify-content: center; }
-
-  /* Footer */
-  footer {
-    padding: 32px 24px;
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-  .footer-links { justify-content: center; }
-
-  /* Section titles */
-  .section-title { font-size: 28px; letter-spacing: -1px; }
-}
-
-/* ═══════════════════════════════════════════════
-   RESPONSIVE — mobile ≤ 600px
-═══════════════════════════════════════════════ */
-@media (max-width: 600px) {
-
-  /* Nav */
-  nav { padding: 0 16px; height: 52px; }
-  .logo { font-size: 15px; }
-  .btn-primary { padding: 7px 14px; font-size: 12px; }
-
-  /* Hero */
-  .hero-left { padding: 48px 16px 32px; }
-  h1 { font-size: 30px; letter-spacing: -1px; }
-  .hero-eyebrow { font-size: 10px; padding: 4px 10px; }
-  .hero-sub { font-size: 14px; }
-  .hero-ctas { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .hero-ctas .btn { width: 100%; justify-content: center; }
-  .hero-right { padding: 0 16px 48px; }
-
-  /* Hero stats — scroll row on tiny screens */
-  .hero-stats {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .hero-stats::-webkit-scrollbar { display: none; }
-  .h-stat { min-width: 90px; }
-  .h-stat-val { font-size: 18px; }
-
-  /* Terminal — hide platforms + status cols on small screens */
-  .terminal-header,
-  .signal-row {
-    grid-template-columns: 1fr 70px 60px;
-  }
-  .th-col:nth-child(3),
-  .th-col:nth-child(4),
-  .th-col:nth-child(5) { display: none; }
-  .s-sentiment,
-  .s-platforms,
-  .s-trending { display: none; }
-
-  /* Ticker — smaller font */
-  .tick-item { padding: 0 18px; font-size: 10px; }
-  .ticker-label { padding: 0 12px; font-size: 9px; }
-
-  /* Problem */
-  .problem { padding: 56px 16px; }
-  .problem-card { flex-direction: column; gap: 10px; }
-
-  /* How */
-  .how { padding: 56px 16px; }
-
-  /* Endpoints */
-  .endpoints { padding: 56px 16px; }
-  pre { font-size: 11px; padding: 14px; }
-
-  /* Use cases — single col */
-  .usecases { padding: 56px 16px; }
-  .uc-grid { grid-template-columns: 1fr; }
-
-  /* Diff */
-  .diff { padding: 56px 16px; }
-  .diff-table-header,
-  .diff-row { grid-template-columns: 1fr 1fr; }
-  /* hide DIY column on very small screens */
-  .dth:nth-child(2),
-  .dc:nth-child(2) { display: none; }
-
-  /* Platforms — single col */
-  .platforms { padding: 56px 16px; }
-  .platform-card { flex: 1 1 100%; border-right: none; border-bottom: 1px solid var(--border); }
-  .platform-card:last-child { border-bottom: none; }
-  .platform-row { flex-direction: column; }
-
-  /* CTA */
-  .cta-section { padding: 64px 16px; }
-  .cta-section h2 { font-size: 26px; letter-spacing: -0.5px; }
-  .cta-section p { font-size: 14px; }
-
-  /* Footer */
-  footer { padding: 28px 16px; }
-
-  /* Section label / title */
-  .section-label { font-size: 10px; }
-  .section-title { font-size: 24px; }
-  .section-sub { font-size: 14px; }
-}
-
-/* ── HAMBURGER MENU ── */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-  padding: 4px;
-  background: none;
-  border: none;
-  z-index: 200;
-}
-.hamburger span {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--text);
-  border-radius: 2px;
-  transition: all 0.25s ease;
-}
-.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.open span:nth-child(2) { opacity: 0; }
-.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-.mobile-nav {
-  display: none;
-  position: fixed;
-  top: 58px;
-  left: 0;
-  right: 0;
-  background: rgba(8,12,16,0.98);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 24px 24px;
-  z-index: 150;
-  flex-direction: column;
-  gap: 4px;
-  transform: translateY(-8px);
-  opacity: 0;
-  transition: all 0.2s ease;
-}
-.mobile-nav.open {
-  transform: translateY(0);
-  opacity: 1;
-}
-.mobile-nav a {
-  display: block;
-  padding: 12px 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text);
-  text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  transition: color 0.15s;
-}
-.mobile-nav a:last-child { border-bottom: none; }
-.mobile-nav a:hover { color: var(--blue); }
-.mobile-nav .btn-primary {
-  margin-top: 12px;
-  width: 100%;
-  justify-content: center;
-  text-align: center;
-}
-
-@media (max-width: 900px) {
-  .hamburger { display: flex; }
-  .mobile-nav { display: flex; }
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;--bg2:#0c0c12;--bg3:#12121a;--bg4:#1a1a24;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#f0f0f5;--sub:#a0a0b0;--dim:#606075;
+  --accent:#00d4ff;--accent2:#00e5ff;--accent3:rgba(0,212,255,0.1);--accent-glow:rgba(0,212,255,0.25);
+  --green:#00ff88;--red:#ff4466;--blue:#4488ff;
+  --reddit:#ff6b35;--hn:#ffb020;--bsky:#00aaff;--yt:#ff3355;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'JetBrains Mono',monospace}
+nav{position:sticky;top:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(5,5,8,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;text-shadow:0 0 20px var(--accent-glow)}
+.nav-links{display:flex;gap:2px}
+.nav-link{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:6px 12px;border-radius:4px;transition:all .2s}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.live-pill{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.12em;color:var(--green);border:1px solid rgba(0,255,136,.3);padding:4px 12px;border-radius:20px;background:rgba(0,255,136,0.08)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.nav-cta{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--accent);border:1px solid rgba(0,212,255,.4);padding:6px 16px;border-radius:4px;transition:all .2s;background:transparent;cursor:pointer}
+.nav-cta:hover{background:var(--accent3);border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+.hero{padding:80px 32px 60px;text-align:center;border-bottom:1px solid var(--border);background:radial-gradient(ellipse 100% 60% at 50% -20%,rgba(0,212,255,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 0%,rgba(0,255,136,0.04) 0%,transparent 50%)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(0,212,255,.3);padding:6px 16px;border-radius:20px;margin-bottom:32px;background:rgba(0,212,255,0.06)}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(52px,8vw,96px);font-weight:800;line-height:1;letter-spacing:-.03em;color:#fff;margin-bottom:20px}
+.hero-title span{background:linear-gradient(135deg,var(--accent) 0%,var(--green) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:16px;font-weight:300;color:var(--sub);max-width:600px;margin:0 auto 32px;line-height:1.85}
+.hero-desc b{color:var(--text);font-weight:500}
+.filter-row{display:flex;justify-content:center;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+.filter-pill{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:7px 16px;border-radius:4px;border:1px solid var(--border2);color:var(--sub);cursor:pointer;transition:all .2s;background:rgba(255,255,255,0.02)}
+.filter-pill:hover{border-color:var(--accent);color:var(--text)}
+.filter-pill.active{background:var(--accent3);border-color:var(--accent);color:var(--accent);box-shadow:0 0 20px rgba(0,212,255,.12)}
+.search-wrap{display:flex;justify-content:center;margin-bottom:48px}
+.search-box{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px 18px;width:100%;max-width:520px;transition:all .2s}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 20px rgba(0,212,255,.08)}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;width:100%}
+.search-box input::placeholder{color:var(--dim)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1200px;margin:0 auto;width:100%}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.stat-card-head{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.stat-card-body{padding:24px 22px}
+.stat-big{font-family:'Sora',sans-serif;font-size:52px;font-weight:800;line-height:1;margin-bottom:20px}
+.stat-sub-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-sub-item{background:var(--bg3);border-radius:8px;padding:14px;text-align:center}
+.stat-sub-logo{display:flex;justify-content:center;margin-bottom:8px}
+.stat-sub-val{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px}
+.stat-sub-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;font-weight:500}
+.trending-bar{max-width:1200px;margin:20px auto 0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.vdiv{width:1px;height:22px;background:var(--border)}
+.section{padding:56px 32px;border-bottom:1px solid var(--border)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.section-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub)}
+.section-rule{height:1px;background:linear-gradient(90deg,rgba(0,212,255,.2),var(--border),transparent);margin-bottom:24px}
+.see-all{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);border:1px solid var(--border);padding:5px 12px;border-radius:4px;transition:all .2s;cursor:pointer}
+.see-all:hover{color:var(--accent);border-color:var(--accent)}
+/* TOPIC CARDS */
+.topics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.topic-card{background:var(--bg);padding:22px;transition:background .2s;cursor:pointer;position:relative;overflow:hidden}
+.topic-card:hover{background:var(--bg2)}
+.topic-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--accent),var(--green));opacity:0;transition:opacity .2s}
+.topic-card:hover::before{opacity:1}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:10px}
+.tc-name{font-size:15px;font-weight:500;color:#fff;line-height:1.25}
+.tc-sent{font-family:'JetBrains Mono',monospace;font-size:11px;flex-shrink:0}
+.tc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tc-chip{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;padding:3px 10px;border-radius:4px;letter-spacing:.04em}
+.tc-cross{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.25)}
+.tc-single{background:rgba(255,255,255,.04);color:var(--sub);border:1px solid var(--border)}
+.tc-bar-w{height:2px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:12px}
+.tc-bar{height:100%;border-radius:2px;transition:width .6s ease}
+.tc-platforms{display:flex;gap:14px;flex-wrap:wrap}
+/* PLATFORM ICON — icon only */
+.pf-icon span{display:none}
+.pf-icon{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--sub)}
+/* PROPAGATION */
+.connected-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.conn-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;transition:all .2s;cursor:pointer}
+.conn-card:hover{border-color:rgba(0,212,255,.2);background:var(--bg3)}
+.conn-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn-platforms{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.conn-stat{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+/* INTELLIGENCE */
+.intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.intel-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;transition:all .2s}
+.intel-card:hover{border-color:rgba(0,212,255,.3);box-shadow:0 0 30px rgba(0,212,255,.05)}
+.intel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.intel-topic{font-size:15px;font-weight:600;color:#fff}
+.intel-meta{display:flex;align-items:center;gap:10px}
+.intel-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.intel-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}
+.intel-text{font-size:13px;color:var(--sub);line-height:1.7}
+.intel-diverg{padding:10px 14px;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:6px}
+.intel-platforms{display:flex;gap:10px;flex-wrap:wrap;padding-top:4px}
+/* GRAFANA */
+.grafana-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg2)}
+.grafana-bar{height:40px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.grafana-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub);letter-spacing:.1em}
+.grafana-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);border:1px solid rgba(0,255,136,.25);padding:4px 12px;border-radius:4px}
+.grafana-fallback{height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--sub)}
+/* PLATFORM STATS */
+.platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pf-stat{background:var(--bg);padding:26px 22px;transition:background .2s;cursor:pointer}
+.pf-stat:hover{background:var(--bg2)}
+.pf-stat-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.pf-stat-name{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
+.pf-num{font-family:'Sora',sans-serif;font-size:34px;font-weight:700;color:#fff;line-height:1;margin-bottom:6px}
+.pf-rate{font-size:12px;color:var(--sub);margin-bottom:12px}
+.pf-top-topic{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px}
+.pf-bar-w{height:2px;background:var(--bg3);border-radius:1px}
+.pf-bar{height:100%;border-radius:1px;opacity:.75}
+/* API */
+.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.ep-list{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.ep{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;transition:all .2s;cursor:pointer}
+.ep:hover{border-color:var(--accent);background:var(--bg3)}
+.ep.active{border-color:rgba(0,212,255,.5);background:var(--accent3)}
+.ep-method{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;padding:3px 10px;border-radius:4px;background:rgba(68,136,255,.15);color:var(--blue);flex-shrink:0;letter-spacing:.04em}
+.ep-path{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text)}
+.ep-desc{font-size:12px;color:var(--sub);margin-left:auto;flex-shrink:0}
+.code-block{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.code-top{height:36px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;justify-content:space-between}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--sub)}
+.code-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);cursor:pointer;border:none;background:none;letter-spacing:.06em;transition:color .2s;padding:0}
+.code-copy:hover{color:var(--accent)}
+.code-body{padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;overflow-x:auto;min-height:300px;max-height:420px;overflow-y:auto}
+.t-key{color:var(--sub)}.t-str{color:#a3e635}.t-num{color:#fb923c}.t-bool{color:var(--blue)}.t-comment{color:var(--dim);font-style:italic}.t-null{color:var(--red)}
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.faq-item{background:var(--bg);padding:22px 26px}
+.faq-q{font-size:14px;font-weight:500;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.faq-q::before{content:'Q';font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);flex-shrink:0;border:1px solid rgba(0,212,255,.3);padding:2px 8px;border-radius:4px;background:var(--accent3)}
+.faq-a{font-size:14px;color:var(--sub);line-height:1.8;padding-left:34px}
+/* CTA */
+.cta-section{padding:80px 32px;text-align:center;background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);border-top:1px solid var(--border);position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;top:-50%;left:50%;transform:translateX(-50%);width:100%;height:100%;background:radial-gradient(ellipse 60% 50% at center,rgba(0,212,255,.07) 0%,transparent 70%);pointer-events:none}
+.cta-title{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:-.02em;position:relative}
+.cta-title em{background:linear-gradient(135deg,var(--accent) 0%,var(--green) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:italic}
+.cta-sub{font-size:15px;color:var(--sub);margin-bottom:32px;font-weight:300;position:relative}
+.btn-cta{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.1em;color:#000;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);border:none;padding:14px 32px;border-radius:6px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.btn-cta:hover{box-shadow:0 0 30px var(--accent-glow);transform:translateY(-2px)}
+footer{padding:40px 32px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:40px;align-items:start}
+.footer-brand{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:.12em;margin-bottom:8px;text-shadow:0 0 20px var(--accent-glow)}
+.footer-note{font-size:12px;color:var(--dim);line-height:1.7;max-width:320px}
+.footer-col-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);margin-bottom:12px}
+.footer-links{display:flex;flex-direction:column;gap:8px}
+.footer-link{font-size:13px;color:var(--dim);transition:color .2s}
+.footer-link:hover{color:var(--accent)}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{height:150px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:0}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(5,5,8,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:44px;width:100%;max-width:500px;position:relative;box-shadow:0 0 80px rgba(0,212,255,.1)}
+.modal-close{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:10px}
+.modal-sub{font-size:14px;color:var(--sub);margin-bottom:28px;line-height:1.7}
+.form-group{margin-bottom:16px}
+.form-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);display:block;margin-bottom:8px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:all .2s}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,212,255,.08)}
+.form-input::placeholder{color:var(--dim)}
+.btn-submit{width:100%;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#000;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.1em;border:none;padding:14px;border-radius:6px;cursor:pointer;transition:all .2s;margin-top:10px;text-transform:uppercase}
+.btn-submit:hover{box-shadow:0 0 25px var(--accent-glow)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+.form-error{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);margin-top:10px;display:none}
+.key-reveal{display:none;text-align:center}
+.key-reveal.show{display:block}
+.key-box{background:var(--bg);border:1px solid rgba(0,212,255,.4);border-radius:8px;padding:18px 24px;margin:24px 0;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:.04em;word-break:break-all;box-shadow:0 0 30px rgba(0,212,255,.08)}
+.key-copy-btn{display:block;width:100%;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--sub);background:none;border:1px solid var(--border);border-radius:6px;padding:8px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.key-copy-btn:hover{color:var(--accent);border-color:var(--accent)}
+.key-limits{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.key-limit-item{padding:12px 16px;background:var(--bg3);border-radius:6px;text-align:center}
+.key-limit-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:#fff;display:block;margin-bottom:4px}
+.key-limit-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--sub);text-transform:uppercase}
+.key-warning{font-size:12px;color:var(--sub);line-height:1.7;padding:12px 16px;background:rgba(255,180,0,.05);border:1px solid rgba(255,180,0,.15);border-radius:6px;margin-top:14px}
+@media(max-width:1100px){.stats-grid{grid-template-columns:1fr !important}}
+@media(max-width:900px){.stats-grid{grid-template-columns:1fr}.topics-grid{grid-template-columns:1fr}.intel-grid{grid-template-columns:1fr}.platform-grid{grid-template-columns:1fr 1fr}.api-grid{grid-template-columns:1fr}.connected-grid{grid-template-columns:1fr 1fr}footer{grid-template-columns:1fr}nav .nav-links{display:none}}
+@media(max-width:600px){.platform-grid{grid-template-columns:1fr}.connected-grid{grid-template-columns:1fr}.stat-sub-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="logo">
-    <div class="logo-dot"></div>
-    SignalFlow
+  <div style="display:flex;align-items:center;gap:24px">
+    <div class="nav-logo">SignalFlow</div>
+    <div class="nav-links">
+      <a href="#trending" class="nav-link">Trending</a>
+      <a href="#intelligence" class="nav-link">Intelligence</a>
+      <a href="#propagation" class="nav-link">Propagation</a>
+      <a href="#dashboard" class="nav-link">Dashboard</a>
+      <a href="#api" class="nav-link">API</a>
+    </div>
   </div>
-  <ul class="nav-links">
-    <li><a href="#how">How it works</a></li>
-    <li><a href="#endpoints">API</a></li>
-    <li><a href="#usecases">Use cases</a></li>
-    <li><a href="/demo/">Demo ↗</a></li>
-    <li><a href="https://github.com/Yogesh249S/Signalflow" target="_blank">GitHub ↗</a></li>
-  </ul>
   <div class="nav-right">
-    <a href="https://github.com/Yogesh249S/Signalflow" class="btn btn-ghost" target="_blank">GitHub</a>
-    <a href="/demo/" class="btn btn-primary">Live demo →</a>
-    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <button class="nav-cta" onclick="openModal()">Get API Key</button>
   </div>
 </nav>
 
-<!-- MOBILE NAV -->
-<div class="mobile-nav" id="mobile-nav">
-  <a href="#how" onclick="closeMenu()">How it works</a>
-  <a href="#endpoints" onclick="closeMenu()">API</a>
-  <a href="#usecases" onclick="closeMenu()">Use cases</a>
-  <a href="/demo/" onclick="closeMenu()">Demo ↗</a>
-  <a href="https://github.com/Yogesh249S/Signalflow" target="_blank" onclick="closeMenu()">GitHub ↗</a>
-  <a href="mailto:yogesh249@proton.me" onclick="closeMenu()">Contact</a>
-  <a href="/demo/" class="btn btn-primary" onclick="closeMenu()">Request API access</a>
-</div>
-
-<!-- HERO -->
 <section class="hero">
-  <div class="hero-left">
-    <div class="hero-eyebrow">
-      <div class="eyebrow-dot"></div>
-      Real-time · 4 platforms · Cross-platform divergence
+  <div class="hero-badge"><div class="live-dot"></div>Real-time · 4 platforms · API key required</div>
+  <h1 class="hero-title">SIGNAL<span>FLOW</span></h1>
+  <p class="hero-desc">Cross-platform signal intelligence across Reddit, HackerNews, Bluesky and YouTube — <b>sentiment, velocity and divergence</b> surfaced before topics reach mainstream media.</p>
+  <div class="filter-row" id="filter-row">
+    <div class="filter-pill active" data-pf="all" onclick="setFilter('all',this)">All Platforms</div>
+    <div class="filter-pill" data-pf="reddit" onclick="setFilter('reddit',this)">Reddit</div>
+    <div class="filter-pill" data-pf="hackernews" onclick="setFilter('hackernews',this)">HackerNews</div>
+    <div class="filter-pill" data-pf="bluesky" onclick="setFilter('bluesky',this)">Bluesky</div>
+    <div class="filter-pill" data-pf="youtube" onclick="setFilter('youtube',this)">YouTube</div>
+    <div class="filter-pill" data-pf="cross" onclick="setFilter('cross',this)">Cross-Platform Only</div>
+  </div>
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--sub);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search topics..." oninput="filterTopics()">
     </div>
-    <h1>Social signals.<br><em>Before</em> they<br>peak.</h1>
-    <p class="hero-sub">
-      SignalFlow ingests Reddit, HackerNews, Bluesky, and YouTube in real time — enriching raw posts into <strong>velocity scores, sentiment, trending topics, and cross-platform divergence events</strong>. One API. No pipeline to build.
-    </p>
-    <div class="hero-ctas">
-      <a href="/demo/" class="btn btn-primary">Live demo →</a>
-      <a href="/cdn-cgi/l/email-protection#a8d1c7cfcddbc09a9c91dbe8cfc5c9c1c486cbc7c5" class="btn btn-ghost">Request API access</a>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-head">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600">All Time</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)">total signals tracked</span>
+      </div>
+      <div class="stat-card-body">
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px">
+          <div class="stat-big" id="kpi-total" style="color:#fff"><div class="skeleton" style="height:52px;width:120px;border-radius:4px"></div></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)">Total<br>Signals</span>
+        </div>
+        <div class="stat-sub-grid">
+          <div class="stat-sub-item" style="border-left:3px solid var(--reddit)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#ff6b35"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 1-.97 1 1 0 0 0-.92.61l-2.38-.5a.27.27 0 0 0-.32.2l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .64-1.54zM7.27 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.65a3.54 3.54 0 0 1-2.85.8 3.54 3.54 0 0 1-2.85-.8.19.19 0 0 1 .27-.27 3.2 3.2 0 0 0 2.58.62 3.2 3.2 0 0 0 2.58-.62.19.19 0 0 1 .27.27zm-.17-1.65a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="#fff"/></svg></div><div class="stat-sub-val" id="kpi-reddit"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--reddit)">Reddit</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--bsky)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 568 501" fill="#00aaff"><path d="M123.121 33.664C188.241 82.553 258.281 181.68 284 234.873c25.719-53.192 95.759-152.32 160.879-201.21C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.635 453.32c-119.861 122.992-172.252-30.859-185.288-70.325-2.628-7.98-3.843-11.662-3.347-8.502.496 3.16-.719-.522-3.347 8.502-13.036 39.466-65.427 193.317-185.288 70.325-62.809-64.76-33.587-129.52 81.253-149.07-65.72 11.185-139.6-7.295-159.875-79.748C11.945 203.66 2 75.293 2 57.947 2-28.906 78.135-1.611 123.121 33.664z"/></svg></div><div class="stat-sub-val" id="kpi-bluesky"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--bsky)">Bluesky</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--yt)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8z" fill="#ff3355"/><path d="M9.7 15.5V8.5l6.3 3.5-6.3 3.5z" fill="#fff"/></svg></div><div class="stat-sub-val" id="kpi-youtube"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--yt)">YouTube</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--hn)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 20 20"><rect width="20" height="20" rx="3" fill="#ffb020"/><text x="4.5" y="15.5" font-size="14" font-weight="900" font-family="Arial,sans-serif" fill="#000">Y</text></svg></div><div class="stat-sub-val" id="kpi-hn"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--hn)">HN</div></div>
+        </div>
+      </div>
     </div>
-    <div class="hero-stats">
-      <div class="h-stat">
-        <div class="h-stat-val">4<span>×</span></div>
-        <div class="h-stat-label">Platforms</div>
+    <div class="stat-card">
+      <div class="stat-card-head">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:600">Last 24 Hours</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)">recent activity</span>
       </div>
-      <div class="h-stat">
-        <div class="h-stat-val">&lt;2<span>s</span></div>
-        <div class="h-stat-label">Pipeline latency</div>
-      </div>
-      <div class="h-stat">
-        <div class="h-stat-val">15<span>m</span></div>
-        <div class="h-stat-label">Divergence window</div>
-      </div>
-      <div class="h-stat">
-        <div class="h-stat-val">5<span>+</span></div>
-        <div class="h-stat-label">Endpoints</div>
+      <div class="stat-card-body">
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px">
+          <div class="stat-big" id="kpi-24h-total" style="color:var(--green)"><div class="skeleton" style="height:52px;width:100px;border-radius:4px"></div></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)">New<br>Signals</span>
+        </div>
+        <div class="stat-sub-grid">
+          <div class="stat-sub-item" style="border-left:3px solid var(--reddit)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#ff6b35"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 1-.97 1 1 0 0 0-.92.61l-2.38-.5a.27.27 0 0 0-.32.2l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .64-1.54zM7.27 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.65a3.54 3.54 0 0 1-2.85.8 3.54 3.54 0 0 1-2.85-.8.19.19 0 0 1 .27-.27 3.2 3.2 0 0 0 2.58.62 3.2 3.2 0 0 0 2.58-.62.19.19 0 0 1 .27.27zm-.17-1.65a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="#fff"/></svg></div><div class="stat-sub-val" id="kpi-24h-reddit"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--reddit)">Reddit</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--bsky)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 568 501" fill="#00aaff"><path d="M123.121 33.664C188.241 82.553 258.281 181.68 284 234.873c25.719-53.192 95.759-152.32 160.879-201.21C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.635 453.32c-119.861 122.992-172.252-30.859-185.288-70.325-2.628-7.98-3.843-11.662-3.347-8.502.496 3.16-.719-.522-3.347 8.502-13.036 39.466-65.427 193.317-185.288 70.325-62.809-64.76-33.587-129.52 81.253-149.07-65.72 11.185-139.6-7.295-159.875-79.748C11.945 203.66 2 75.293 2 57.947 2-28.906 78.135-1.611 123.121 33.664z"/></svg></div><div class="stat-sub-val" id="kpi-24h-bluesky"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--bsky)">Bluesky</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--yt)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8z" fill="#ff3355"/><path d="M9.7 15.5V8.5l6.3 3.5-6.3 3.5z" fill="#fff"/></svg></div><div class="stat-sub-val" id="kpi-24h-youtube"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--yt)">YouTube</div></div>
+          <div class="stat-sub-item" style="border-left:3px solid var(--hn)"><div class="stat-sub-logo"><svg width="24" height="24" viewBox="0 0 20 20"><rect width="20" height="20" rx="3" fill="#ffb020"/><text x="4.5" y="15.5" font-size="14" font-weight="900" font-family="Arial,sans-serif" fill="#000">Y</text></svg></div><div class="stat-sub-val" id="kpi-24h-hn"><div class="skeleton" style="height:24px;width:48px;margin:0 auto;border-radius:3px"></div></div><div class="stat-sub-lbl" style="color:var(--hn)">HN</div></div>
+        </div>
       </div>
     </div>
   </div>
-
-  <div class="hero-right">
-    <div class="feed-terminal">
-      <div class="terminal-bar">
-        <div class="terminal-dots">
-          <div class="terminal-dot" style="background:#ff5f57"></div>
-          <div class="terminal-dot" style="background:#febc2e"></div>
-          <div class="terminal-dot" style="background:#28c840"></div>
-        </div>
-        <div class="terminal-title">GET /api/v1/signals/live</div>
-        <div class="live-badge">LIVE</div>
-      </div>
-      <div class="terminal-header">
-        <div class="th-col">Topic</div>
-        <div class="th-col">Signals</div>
-        <div class="th-col">Sentiment</div>
-        <div class="th-col">Platforms</div>
-        <div class="th-col">Type</div>
-      </div>
-      <div class="signal-feed" id="signal-feed"></div>
-      <div class="terminal-footer">
-        <div class="tf-left">Updated <span id="feed-time">just now</span></div>
-        <div class="tf-right">↑ WebSocket push enabled</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker-label">TRENDING NOW</div>
-  <div class="ticker-track" id="ticker"></div>
-</div>
-
-<!-- PROBLEM -->
-<section class="problem" id="how">
-  <div class="section-label">The problem</div>
-  <div class="problem-grid">
-    <div class="problem-cards fade-up">
-      <div class="problem-card">
-        <div class="p-icon" style="background:rgba(255,23,68,0.1); color:var(--red)">📡</div>
-        <div>
-          <div class="p-title">You can't watch everything at once</div>
-          <div class="p-desc">A topic starts gaining traction on HackerNews. By the time it surfaces on Reddit, it's already mainstream. You missed the window.</div>
-        </div>
-      </div>
-      <div class="problem-card">
-        <div class="p-icon" style="background:rgba(255,171,0,0.1); color:var(--amber)">⚙️</div>
-        <div>
-          <div class="p-title">Building ingestion infrastructure is expensive</div>
-          <div class="p-desc">Kafka clusters, rate limiters, NLP pipelines, deduplication logic, schema normalisation across 4 different APIs. Months of work before you see a single signal.</div>
-        </div>
-      </div>
-      <div class="problem-card">
-        <div class="p-icon" style="background:rgba(0,230,118,0.1); color:var(--green)">⚡</div>
-        <div>
-          <div class="p-title">Raw data isn't actionable</div>
-          <div class="p-desc">A post with 1,200 upvotes tells you nothing. A post going from 45 → 1,200 in 5 minutes tells you everything. Velocity and divergence are what matter.</div>
-        </div>
-      </div>
-    </div>
-    <div class="problem-right fade-up">
-      <div class="section-title">The internet is moving faster than your team can monitor it.</div>
-      <div class="section-sub" style="margin-top:16px;">Every platform has its own API, its own schema, its own rate limits. Building cross-platform signal detection from scratch takes a team and months. SignalFlow is that infrastructure — already built, available as an API.</div>
-      <div class="problem-quote">
-        <div class="pq-text">"We knew a topic was gaining traction — we just didn't know it had already peaked on two other platforms before we even saw it on the one we were watching."</div>
-        <div class="pq-source">— The problem SignalFlow solves</div>
-      </div>
+  <div class="trending-bar">
+    <div style="display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:blink 2s ease-in-out infinite"></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text);font-weight:600">Trending Now</span></div>
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--green)" id="kpi-topics-inline">—</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Topics</span></div>
+      <div class="vdiv"></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--accent)" id="kpi-cross-inline">—</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Cross-Platform</span></div>
+      <div class="vdiv"></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text)">4</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Platforms</span></div>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section class="how">
-  <div class="section-label">How it works</div>
-  <div class="section-title">Ingestion to enriched signal in under 2 seconds.</div>
-  <div class="how-grid fade-up">
-    <div class="how-step">
-      <div class="step-num">01 — INGEST</div>
-      <div class="step-icon">⬇</div>
-      <div class="step-title">4 platforms, one normalised schema</div>
-      <div class="step-desc">Reddit, HackerNews, Bluesky, and YouTube are polled continuously. Every post is published to a unified Kafka topic — same schema regardless of source platform.</div>
-    </div>
-    <div class="how-step">
-      <div class="step-num">02 — ENRICH</div>
-      <div class="step-icon">⚙</div>
-      <div class="step-title">NLP, velocity, and divergence detection</div>
-      <div class="step-desc">VADER sentiment on full post content. spaCy NER extracts named entities as structured topics. Velocity = Δscore/Δtime. Cross-platform divergence fires when a topic appears on 2+ platforms in the same 15-minute window.</div>
-    </div>
-    <div class="how-step">
-      <div class="step-num">03 — SERVE</div>
-      <div class="step-icon">→</div>
-      <div class="step-title">REST + WebSocket, ready to query</div>
-      <div class="step-desc">Enriched signals delivered via authenticated REST endpoints or pushed live via WebSocket. JWT auth, cursor pagination, 30s cache. Build your dashboard, alert system, or model on top — without touching the pipeline.</div>
-    </div>
+<section class="section" id="trending">
+  <div class="section-head"><div class="section-title">Trending Topics</div><div style="display:flex;align-items:center;gap:12px"><span class="section-count" id="trend-ts"></span><span class="see-all" onclick="window.open('/api/v1/trending/?platform=all&window_minutes=240&limit=25')">View API ↗</span></div></div>
+  <div class="section-rule"></div>
+  <div class="topics-grid" id="topics-grid"><div class="skel-card skeleton"></div><div class="skel-card skeleton"></div><div class="skel-card skeleton"></div><div class="skel-card skeleton"></div><div class="skel-card skeleton"></div><div class="skel-card skeleton"></div></div>
+</section>
+
+<section class="section" id="intelligence" style="background:var(--bg2)">
+  <div class="section-head"><div class="section-title">Topic Intelligence</div><span class="section-count">LLM-generated · updated every 15 min</span></div>
+  <div class="section-rule"></div>
+  <p style="font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:24px;max-width:680px">For each trending topic, an LLM reads the top signals and extracts the <b style="color:var(--text);font-weight:500">dominant narrative</b>, <b style="color:var(--text);font-weight:500">emerging counter-angle</b> and <b style="color:var(--text);font-weight:500">platform divergence explanation</b> — automatically.</p>
+  <div class="intel-grid" id="intel-grid"><div class="skeleton" style="height:200px;border-radius:8px"></div><div class="skeleton" style="height:200px;border-radius:8px"></div><div class="skeleton" style="height:200px;border-radius:8px"></div><div class="skeleton" style="height:200px;border-radius:8px"></div></div>
+</section>
+
+<section class="section" id="propagation">
+  <div class="section-head"><div class="section-title">Cross-Platform Propagation</div><span class="section-count" id="cross-count"></span></div>
+  <div class="section-rule"></div>
+  <p style="font-size:14px;color:var(--sub);margin-bottom:22px;line-height:1.8">Topics breaking containment — appearing on <b style="color:var(--text);font-weight:500">two or more platforms</b> within the same hour. These signals cross community boundaries before reaching mainstream media.</p>
+  <div class="connected-grid" id="connected-grid"><div class="skeleton" style="height:110px;border-radius:8px"></div><div class="skeleton" style="height:110px;border-radius:8px"></div><div class="skeleton" style="height:110px;border-radius:8px"></div><div class="skeleton" style="height:110px;border-radius:8px"></div></div>
+</section>
+
+<section class="section" id="dashboard" style="background:var(--bg2)">
+  <div class="section-head"><div class="section-title">Signal Intelligence Dashboard</div><span class="section-count">Topic traction · sentiment · cross-platform lead/lag</span></div>
+  <div class="section-rule"></div>
+  <p style="font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:22px;max-width:680px">Live Grafana dashboard showing topic velocity, sentiment shifts and cross-platform lead/lag.</p>
+  <div class="grafana-wrap">
+    <div class="grafana-bar"><span class="grafana-title">SIGNALFLOW — TOPIC INTELLIGENCE</span><span class="grafana-badge">● LIVE · 1m refresh</span></div>
+    <div id="grafana-content" class="grafana-fallback"><div style="font-size:32px;opacity:.3">📊</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;text-align:center;line-height:1.9;color:var(--sub)">Dashboard loading...<br><a href="#" onclick="openGrafana();return false" style="color:var(--accent);font-size:11px">Open in new tab ↗</a></div></div>
   </div>
 </section>
 
-<!-- ENDPOINTS -->
-<section class="endpoints" id="endpoints">
-  <div class="section-label">API reference</div>
-  <div class="section-title">Everything enriched, nothing raw.</div>
-  <div class="section-sub" style="margin-top:12px">Every response includes sentiment, velocity, trending score, and NER topics. You never receive an unprocessed post.</div>
-  <div class="endpoints-grid fade-up">
-    <div class="ep-list">
-      <div class="ep-card active" onclick="showCode('signals')">
-        <div class="ep-method m-get">GET</div>
-        <div class="ep-info">
-          <div class="ep-path">/api/v1/signals/</div>
-          <div class="ep-desc">Unified cross-platform feed — all signals with sentiment, velocity, trending score, and NER topics</div>
-        </div>
-      </div>
-      <div class="ep-card" onclick="showCode('trending')">
-        <div class="ep-method m-get">GET</div>
-        <div class="ep-info">
-          <div class="ep-path">/api/v1/trending/</div>
-          <div class="ep-desc">Velocity-ranked trending signals — filterable by platform and time window</div>
-        </div>
-      </div>
-      <div class="ep-card" onclick="showCode('compare')">
-        <div class="ep-method m-get">GET</div>
-        <div class="ep-info">
-          <div class="ep-path">/api/v1/compare/</div>
-          <div class="ep-desc">Cross-platform divergence events — topics that appeared on 2+ platforms with spread time and delta score</div>
-        </div>
-      </div>
-      <div class="ep-card" onclick="showCode('pulse')">
-        <div class="ep-method m-get">GET</div>
-        <div class="ep-info">
-          <div class="ep-path">/api/v1/pulse/</div>
-          <div class="ep-desc">Topic sentiment summary — VADER compound scores, NER entities, per-topic sentiment distribution</div>
-        </div>
-      </div>
-      <div class="ep-card" onclick="showCode('ws')">
-        <div class="ep-method m-ws">WS</div>
-        <div class="ep-info">
-          <div class="ep-path">ws://signalflo.in/ws/signals/</div>
-          <div class="ep-desc">Real-time push stream — fires on every batch flush, no polling needed</div>
-        </div>
-      </div>
-      <div class="ep-card" onclick="showCode('token')">
-        <div class="ep-method m-post">POST</div>
-        <div class="ep-info">
-          <div class="ep-path">/api/token/</div>
-          <div class="ep-desc">Obtain JWT access + refresh tokens — 60 min access, 7 day refresh</div>
-        </div>
-      </div>
-    </div>
-    <div class="code-panel">
-      <div class="cp-bar">
-        <div class="cp-lang" id="code-lang">RESPONSE — /api/v1/signals/</div>
-        <button class="cp-copy" onclick="copyCode()">copy</button>
-      </div>
-      <pre id="code-display"><span class="cm">// GET /api/v1/signals/</span>
-<span class="cm">// Authorization: Bearer &lt;token&gt;</span>
-
-{
-  <span class="k">"id"</span>: <span class="str">"xyz789"</span>,
-  <span class="k">"platform"</span>: <span class="str">"reddit"</span>,
-  <span class="k">"title"</span>: <span class="str">"New breakthrough in quantum computing"</span>,
-  <span class="k">"raw_score"</span>: <span class="nu">1200</span>,
-  <span class="k">"score_velocity"</span>: <span class="nu">3.85</span>,      <span class="cm">// Δscore/Δtime per second</span>
-  <span class="k">"comment_velocity"</span>: <span class="nu">0.14</span>,
-  <span class="k">"trending_score"</span>: <span class="nu">0.60</span>,
-  <span class="k">"is_trending"</span>: <span class="kw">true</span>,
-  <span class="k">"sentiment_compound"</span>: <span class="nu">0.34</span>,
-  <span class="k">"sentiment_label"</span>: <span class="str">"positive"</span>,
-  <span class="k">"topics"</span>: [<span class="str">"quantum computing"</span>, <span class="str">"ibm"</span>],
-  <span class="k">"first_seen"</span>: <span class="str">"2026-03-05T06:30:00Z"</span>,
-  <span class="k">"last_updated"</span>: <span class="str">"2026-03-05T06:35:00Z"</span>
-}</pre>
-    </div>
-  </div>
+<section class="section" id="platforms">
+  <div class="section-head"><div class="section-title">Data Sources</div><span class="section-count">4 platforms monitored</span></div>
+  <div class="section-rule"></div>
+  <div class="platform-grid" id="pf-grid"><div class="pf-stat skeleton" style="min-height:130px"></div><div class="pf-stat skeleton" style="min-height:130px"></div><div class="pf-stat skeleton" style="min-height:130px"></div><div class="pf-stat skeleton" style="min-height:130px"></div></div>
 </section>
 
-<!-- USE CASES -->
-<section class="usecases" id="usecases">
-  <div class="section-label">Who uses it</div>
-  <div class="section-title">Any team that needs to know<br>what's moving — and why.</div>
-  <div class="uc-grid fade-up">
-    <div class="uc-card" style="--accent-color: var(--blue)">
-      <div class="uc-icon">📈</div>
-      <div class="uc-title">Quantitative Analysts & Algo Traders</div>
-      <div class="uc-desc">Reddit and HackerNews sentiment moves crypto and small-cap equities before price action shows up on charts. Velocity scores and cross-platform divergence give you the edge before the trade becomes obvious.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">velocity alerts</span>
-        <span class="uc-tag">divergence events</span>
-        <span class="uc-tag">sentiment feed</span>
-      </div>
-    </div>
-    <div class="uc-card" style="--accent-color: var(--green)">
-      <div class="uc-icon">🔍</div>
-      <div class="uc-title">Brand & Market Intelligence Teams</div>
-      <div class="uc-desc">Know when your brand, competitor, or product category starts gaining velocity across platforms — before it becomes a news story. Build internal dashboards or alerting systems directly on the API.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">brand monitoring</span>
-        <span class="uc-tag">competitor signals</span>
-        <span class="uc-tag">WebSocket push</span>
-      </div>
-    </div>
-    <div class="uc-card" style="--accent-color: var(--amber)">
-      <div class="uc-icon">📰</div>
-      <div class="uc-title">Media & Newsletter Businesses</div>
-      <div class="uc-desc">Identify what's gaining traction before it peaks. The trending endpoint returns velocity-ranked topics — not what's already popular, but what's accelerating right now across all four platforms simultaneously.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">trending topics</span>
-        <span class="uc-tag">early detection</span>
-        <span class="uc-tag">cross-platform</span>
-      </div>
-    </div>
-    <div class="uc-card" style="--accent-color: var(--cyan)">
-      <div class="uc-icon">🛠</div>
-      <div class="uc-title">Developer Tool Companies</div>
-      <div class="uc-desc">Your product or framework is being discussed. Get structured named-entity feeds and sentiment scores per mention — without scraping, rate limit headaches, or building a pipeline.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">NER entities</span>
-        <span class="uc-tag">mention tracking</span>
-        <span class="uc-tag">REST API</span>
-      </div>
-    </div>
-    <div class="uc-card" style="--accent-color: var(--purple)">
-      <div class="uc-icon">🎓</div>
-      <div class="uc-title">Researchers & Data Scientists</div>
-      <div class="uc-desc">Information diffusion across platforms is a live research problem. SignalFlow provides a clean, normalised, timestamped dataset with platform tags — without having to maintain ingestion infrastructure.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">normalised schema</span>
-        <span class="uc-tag">time-series data</span>
-        <span class="uc-tag">multi-platform</span>
-      </div>
-    </div>
-    <div class="uc-card" style="--accent-color: var(--red)">
-      <div class="uc-icon">⚠️</div>
-      <div class="uc-title">Risk & Compliance Teams</div>
-      <div class="uc-desc">Regulatory topics, litigation keywords, and industry events break on social before they hit formal channels. Cross-platform divergence detection tells you when something is spreading faster than usual.</div>
-      <div class="uc-tags">
-        <span class="uc-tag">divergence alerts</span>
-        <span class="uc-tag">velocity spikes</span>
-        <span class="uc-tag">keyword tracking</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DIFFERENTIATORS -->
-<section class="diff">
-  <div class="section-label">Why SignalFlow</div>
-  <div class="section-title">Not a dashboard. Not a scraper.<br>Infrastructure you query.</div>
-  <div class="diff-grid fade-up">
+<section class="section" id="api">
+  <div class="section-head"><div class="section-title">API Reference</div><span class="see-all" onclick="window.open('/api/v1/')">Browse API ↗</span></div>
+  <div class="section-rule"></div>
+  <div class="api-grid">
     <div>
-      <div class="diff-table">
-        <div class="diff-table-header">
-          <div class="dth">Capability</div>
-          <div class="dth">DIY Pipeline</div>
-          <div class="dth highlight">SignalFlow</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">Cross-platform normalisation</div>
-          <div class="dc dc-no">✗ Months of work</div>
-          <div class="dc dc-yes">✓ Built in</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">Velocity scoring</div>
-          <div class="dc dc-no">✗ Custom logic</div>
-          <div class="dc dc-yes">✓ Every signal</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">Divergence detection</div>
-          <div class="dc dc-no">✗ Hard to build</div>
-          <div class="dc dc-yes">✓ 15min windows</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">NLP enrichment</div>
-          <div class="dc dc-no">✗ Separate service</div>
-          <div class="dc dc-yes">✓ Inline</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">WebSocket push</div>
-          <div class="dc dc-no">✗ Extra complexity</div>
-          <div class="dc dc-yes">✓ Included</div>
-        </div>
-        <div class="diff-row">
-          <div class="dc dc-feature">Time to first signal</div>
-          <div class="dc dc-no">✗ Weeks</div>
-          <div class="dc dc-yes">✓ One API call</div>
-        </div>
+      <p style="font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:22px">REST API. <b style="color:var(--text);font-weight:500">API key required</b> for all endpoints. Each response includes signal counts, sentiment, velocity and LLM-generated intelligence.</p>
+      <div class="ep-list" id="ep-list">
+        <div class="ep active" onclick="loadApiPreview('trending',this)"><span class="ep-method">GET</span><span class="ep-path">/api/v1/trending/</span><span class="ep-desc">trending topics</span></div>
+        <div class="ep" onclick="loadApiPreview('pulse',this)"><span class="ep-method">GET</span><span class="ep-path">/api/v1/pulse/?topic=</span><span class="ep-desc">topic intelligence</span></div>
+        <div class="ep" onclick="loadApiPreview('signals',this)"><span class="ep-method">GET</span><span class="ep-path">/api/v1/signals/</span><span class="ep-desc">raw signal feed</span></div>
+        <div class="ep" onclick="loadApiPreview('stats',this)"><span class="ep-method">GET</span><span class="ep-path">/api/v1/stats/</span><span class="ep-desc">pipeline stats</span></div>
+        <div class="ep" onclick="loadApiPreview('compare',this)"><span class="ep-method">GET</span><span class="ep-path">/api/v1/compare/</span><span class="ep-desc">divergence events</span></div>
       </div>
+      <div style="padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--sub);margin-bottom:10px;text-transform:uppercase">Parameters</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:2.1"><span style="color:var(--accent)">platform</span> = all | reddit | hackernews | bluesky | youtube<br><span style="color:var(--accent)">window_minutes</span> = 15 | 30 | 60 | 240<br><span style="color:var(--accent)">limit</span> = 1–100 (default 20)</div></div>
     </div>
-    <div class="diff-features">
-      <div class="diff-feat">
-        <div class="df-icon">⚡</div>
-        <div>
-          <div class="df-title">Velocity, not volume</div>
-          <div class="df-desc">Raw score tells you what's popular. Δscore/Δtime tells you what's accelerating. Every signal includes score velocity and comment velocity — computed across refresh cycles, not estimated.</div>
-        </div>
-      </div>
-      <div class="diff-feat">
-        <div class="df-icon">🔀</div>
-        <div>
-          <div class="df-title">Cross-platform divergence</div>
-          <div class="df-desc">When the same topic surfaces on 2+ platforms within 15 minutes, SignalFlow fires a divergence event with origin platform, spread time, and delta score. This is the signal you can't get from any single platform.</div>
-        </div>
-      </div>
-      <div class="diff-feat">
-        <div class="df-icon">🏗</div>
-        <div>
-          <div class="df-title">No pipeline to maintain</div>
-          <div class="df-desc">Kafka, TimescaleDB, spaCy, VADER, Redis, WAL replication — all running. You query a REST endpoint. When platforms change their APIs, we update the ingestion. Not you.</div>
-        </div>
-      </div>
-    </div>
+    <div><div class="code-block"><div class="code-top"><span class="code-lang" id="code-label">live · /api/v1/trending/</span><button class="code-copy" onclick="copyCode()">copy</button></div><div class="code-body" id="api-code"><span class="t-comment">// fetching live data...</span></div></div></div>
   </div>
 </section>
 
-<!-- PLATFORMS -->
-<section class="platforms">
-  <div class="section-label">Data sources</div>
-  <div class="section-title">Four platforms. One schema.</div>
-  <div class="platform-row fade-up">
-    <div class="platform-card">
-      <div class="pl-icon">🟠</div>
-      <div class="pl-name">Reddit</div>
-      <div class="pl-detail">Posts, scores, comments. Tiered polling — aggressive for new posts, slow for aged content. Refresh cycle computes velocity delta.</div>
-      <div class="pl-stat">
-        <span class="pl-tag">asyncpraw</span>
-        <span class="pl-tag">velocity</span>
-        <span class="pl-tag">comments</span>
-      </div>
-    </div>
-    <div class="platform-card">
-      <div class="pl-icon">🟡</div>
-      <div class="pl-name">HackerNews</div>
-      <div class="pl-detail">Stories and scores from the Algolia API. HN often surfaces technical topics 30–60 minutes before they appear on Reddit or Bluesky.</div>
-      <div class="pl-stat">
-        <span class="pl-tag">stories</span>
-        <span class="pl-tag">early signal</span>
-        <span class="pl-tag">tech topics</span>
-      </div>
-    </div>
-    <div class="platform-card">
-      <div class="pl-icon">🦋</div>
-      <div class="pl-name">Bluesky</div>
-      <div class="pl-detail">Posts from the AT Protocol firehose. Higher signal-to-noise on niche technical and policy topics than Reddit's mainstream subreddits.</div>
-      <div class="pl-stat">
-        <span class="pl-tag">AT Protocol</span>
-        <span class="pl-tag">niche topics</span>
-        <span class="pl-tag">policy</span>
-      </div>
-    </div>
-    <div class="platform-card">
-      <div class="pl-icon">▶</div>
-      <div class="pl-name">YouTube</div>
-      <div class="pl-detail">Video titles, descriptions, and comment volume from the Data API. Captures topics with broader mainstream reach than text-first platforms.</div>
-      <div class="pl-stat">
-        <span class="pl-tag">Data API</span>
-        <span class="pl-tag">mainstream</span>
-        <span class="pl-tag">comments</span>
-      </div>
-    </div>
+<section class="section" id="faq">
+  <div class="section-head"><div class="section-title">Frequently Asked Questions</div></div>
+  <div class="section-rule"></div>
+  <div class="faq-list">
+    <div class="faq-item"><div class="faq-q">What is SignalFlow?</div><div class="faq-a">A real-time cross-platform signal intelligence system monitoring Reddit, HackerNews, Bluesky and YouTube simultaneously. It detects when topics emerge and propagate across communities — often before mainstream media coverage.</div></div>
+    <div class="faq-item"><div class="faq-q">How does the intelligence block work?</div><div class="faq-a">Every 15 minutes, an LLM reads the top signals for each trending topic and generates a 3-sentence summary, identifies the dominant narrative and emerging counter-narrative, and explains why platform sentiment diverges. Runs outside the hot path — ingestion is never delayed.</div></div>
+    <div class="faq-item"><div class="faq-q">What does cross-platform mean?</div><div class="faq-a">A topic appearing on two or more platforms within the same window. This indicates a topic is escaping its origin community — a reliable early signal of mainstream breakout.</div></div>
+    <div class="faq-item"><div class="faq-q">How is the trend score calculated?</div><div class="faq-a">Each signal gets a score derived from velocity, comment velocity, baseline comparison and sentiment weight. Scores are normalised across platforms so a Bluesky post and Reddit thread are directly comparable.</div></div>
+    <div class="faq-item"><div class="faq-q">How do I access the API?</div><div class="faq-a">All endpoints require an API key. Click "Get API Key" above — same email always returns the same key. Full documentation at <a href="/docs" style="color:var(--accent)">signalflo.xyz/docs</a>.</div></div>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta-section">
-  <div class="section-label" style="justify-content:center;margin-bottom:24px">Get started</div>
-  <h2>Your first enriched signal<br>in one API call.</h2>
-  <p>No pipeline. No scraping. No rate limit wrangling. Request access and start building on top of enriched cross-platform signal data.</p>
-  <div class="cta-group">
-    <a href="/cdn-cgi/l/email-protection#661f090103150e54525f1526010b070f0a4805090b" class="btn btn-primary" style="font-size:15px;padding:12px 28px">Request API access →</a>
-    <a href="https://github.com/Yogesh249S/Signalflow" class="btn btn-ghost" style="font-size:15px;padding:12px 28px" target="_blank">View on GitHub</a>
-  </div>
+  <h2 class="cta-title">Social signals, <em>before they peak.</em></h2>
+  <p class="cta-sub">Real data. Updated every 30 seconds.</p>
+  <button class="btn-cta" onclick="openModal()">Get API Key →</button>
 </section>
 
-<!-- FOOTER -->
 <footer>
-  <div class="footer-left">© 2026 SignalFlow · signalflo.in</div>
-  <div class="footer-links">
-    <a href="https://github.com/Yogesh249S/Signalflow" target="_blank">GitHub</a>
-    <a href="httchitecture</a>
-    <a href="mailto:yogesh249s@gmail.com">Contact</a>
-    <a href="/demo/">Demo</a>
+  <div>
+    <div class="footer-brand">SIGNALFLOW</div>
+    <div class="footer-note">Cross-platform signal intelligence. Monitoring Reddit, HackerNews, Bluesky and YouTube in real time.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);margin-top:14px" id="footer-clock"></div>
+  </div>
+  <div>
+    <div class="footer-col-title">Contact</div>
+    <div class="footer-links">
+      <a href="mailto:signalflo@proton.me" class="footer-link">signalflo@proton.me</span></a>
+      <a href="#faq" class="footer-link">FAQ</a>
+      <!--
+      <a href="https://github.com/Yogesh249S/Signalflow" target="_blank" class="footer-link">GitHub</a>
+    -->
+    </div>
   </div>
 </footer>
 
-<script>
-// ── LIVE SIGNAL FEED ──
-const DEMO_CREDS = { username: 'demo', password: 'SignalFlow2026' };
-let DEMO_TOKEN = null;
-let liveSignals = [];
+<div class="modal-overlay" id="access-modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-form-state">
+      <div class="modal-title">Get API Access</div>
+      <div class="modal-sub">API key required for all endpoints.<br>100 requests/minute · Usage tracked per key.</div>
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="access-name" type="text" placeholder="Your name" autocomplete="name"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="access-email" type="email" placeholder="you@company.com" autocomplete="email"></div>
+      <div class="form-error" id="form-error"></div>
+      <button class="btn-submit" id="submit-btn" onclick="submitAccessRequest()">Generate API Key →</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);text-align:center;margin-top:16px;line-height:1.7">By requesting a key you agree not to resell or redistribute<br>SignalFlow data or API access.</div>
+    </div>
+    <div class="key-reveal" id="modal-key-state">
+      <div style="font-size:32px;margin-bottom:14px">✦</div>
+      <div class="modal-title" style="font-size:22px">Your API Key</div>
+      <div class="modal-sub" style="margin-bottom:0">Copy and store this key — it won't be shown again.</div>
+      <div class="key-box" id="key-display">—</div>
+      <button class="key-copy-btn" onclick="copyApiKey()">COPY KEY</button>
+      <div class="key-limits"><div class="key-limit-item"><span class="key-limit-val">100</span><span class="key-limit-lbl">req / min</span></div><div class="key-limit-item"><span class="key-limit-val">Tracked</span><span class="key-limit-lbl">usage logged</span></div></div>
+      <div class="key-warning">Use as: <span style="color:var(--accent)">Authorization: Token YOUR_KEY</span></div>
+      <a href="/docs" style="display:block;margin-top:16px;width:100%;text-align:center;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#000;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.1em;padding:14px;border-radius:6px;text-decoration:none;text-transform:uppercase">How to Use Your Key — View Docs →</a>
+    </div>
+  </div>
+</div>
 
-const pltMap = { reddit:'R', hackernews:'HN', bluesky:'BSky', youtube:'YT' };
-const pltClass = { reddit:'plt-r', hackernews:'plt-h', bluesky:'plt-b', youtube:'plt-y' };
-
-async function getDemoToken() {
-  try {
-    const res = await fetch('/api/token/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(DEMO_CREDS)
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    DEMO_TOKEN = data.access;
-    setTimeout(getDemoToken, 55 * 60 * 1000);
-    return true;
-  } catch(e) { return false; }
-}
-
-async function fetchLiveSignals() {
-  if (!DEMO_TOKEN) return;
-  try {
-    const res = await fetch('/api/v1/trending/?page_size=20&window_minutes=120', {
-      headers: { 'Authorization': `Bearer ${DEMO_TOKEN}` }
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    liveSignals = data.topics || data.results || data;
-    renderLiveFeed();
-    updateFeedTime();
-  } catch(e) {}
-}
-
-async function fetchLiveTicker() {
-  if (!DEMO_TOKEN) return;
-  try {
-    const res = await fetch('/api/v1/trending/?page_size=16', {
-      headers: { 'Authorization': `Bearer ${DEMO_TOKEN}` }
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    const items = data.results || data;
-    if (items && items.length) renderLiveTicker(items);
-  } catch(e) {}
-}
-
-function buildLiveRow(s, delay) {
-  // s is a trending topic object
-  const topic = s.topic || s.name || 'unknown';
-  const platforms = s.platforms || [];
-  const sent = s.avg_sentiment || 0;
-  const sentWidth = Math.round(Math.min(Math.abs(sent) * 52, 52));
-  const sentClass = sent > 0.05 ? 'sent-pos' : sent < -0.05 ? 'sent-neg' : 'sent-neu';
-  const vel = s.avg_velocity || 0;
-  const velStr = vel > 0.001 ? `+${vel.toFixed(3)}/s` : vel < -0.001 ? `${vel.toFixed(3)}/s` : `${s.signal_count} sig`;
-  const velUp = vel >= 0;
-  const isCross = s.cross_platform;
-  const trendClass = isCross ? 'trend-hot' : 'trend-new';
-  const trendLabel = isCross ? '✕ CROSS' : '↑ TREND';
-
-  const pltsHtml = platforms.slice(0,3).map(p => {
-    const plt = p.toLowerCase();
-    const lbl = pltMap[plt] || plt.substring(0,2).toUpperCase();
-    const cls = pltClass[plt] || 'plt-r';
-    return `<span class="plt ${cls}">${lbl}</span>`;
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+var PF_SVG={
+  reddit:'<svg width="14" height="14" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#ff6b35"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 1-.97 1 1 0 0 0-.92.61l-2.38-.5a.27.27 0 0 0-.32.2l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .64-1.54zM7.27 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.65a3.54 3.54 0 0 1-2.85.8 3.54 3.54 0 0 1-2.85-.8.19.19 0 0 1 .27-.27 3.2 3.2 0 0 0 2.58.62 3.2 3.2 0 0 0 2.58-.62.19.19 0 0 1 .27.27zm-.17-1.65a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="#fff"/></svg>',
+  hackernews:'<svg width="14" height="14" viewBox="0 0 20 20"><rect width="20" height="20" rx="3" fill="#ffb020"/><text x="4.5" y="15.5" font-size="14" font-weight="900" font-family="Arial,sans-serif" fill="#000">Y</text></svg>',
+  bluesky:'<svg width="14" height="14" viewBox="0 0 568 501" fill="#00aaff"><path d="M123.121 33.664C188.241 82.553 258.281 181.68 284 234.873c25.719-53.192 95.759-152.32 160.879-201.21C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.635 453.32c-119.861 122.992-172.252-30.859-185.288-70.325-2.628-7.98-3.843-11.662-3.347-8.502.496 3.16-.719-.522-3.347 8.502-13.036 39.466-65.427 193.317-185.288 70.325-62.809-64.76-33.587-129.52 81.253-149.07-65.72 11.185-139.6-7.295-159.875-79.748C11.945 203.66 2 75.293 2 57.947 2-28.906 78.135-1.611 123.121 33.664z"/></svg>',
+  youtube:'<svg width="14" height="14" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8z" fill="#ff3355"/><path d="M9.7 15.5V8.5l6.3 3.5-6.3 3.5z" fill="#fff"/></svg>'
+};
+var PF_LABEL={reddit:'REDDIT',hackernews:'HN',bluesky:'BLUESKY',youtube:'YOUTUBE'};
+var PFC={reddit:'var(--reddit)',hackernews:'var(--hn)',bluesky:'var(--bsky)',youtube:'var(--yt)'};
+function pfIcon(p){var svg=PF_SVG[p]||'';var lbl=PF_LABEL[p]||p.toUpperCase();return'<span class="pf-icon">'+svg+'<span>'+lbl+'</span></span>';}
+var allTopics=[],activeFilter='all',currentTrendingTopic='iran';
+var GRAFANA_URL='https://signalflo.xyz/grafana/d/signalflow-topics/signalflow-topic-intelligence?orgId=1&kiosk&refresh=30s';
+function openGrafana(){if(GRAFANA_URL)window.open(GRAFANA_URL,'_blank');}
+function initGrafana(){if(!GRAFANA_URL)return;document.getElementById('grafana-content').innerHTML='<iframe style="width:100%;height:400px;border:none;display:block" src="'+GRAFANA_URL+'" frameborder="0" allowfullscreen></iframe>';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ago(iso){var d=(Date.now()-new Date(iso))/1000;if(d<60)return Math.round(d)+'s ago';if(d<3600)return Math.round(d/60)+'m ago';return Math.round(d/3600)+'h ago';}
+function fmtNum(n){if(!n&&n!==0)return'--';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return String(n);}
+function updateClock(){var el=document.getElementById('footer-clock');if(el)el.textContent=new Date().toISOString().replace('T',' ').slice(0,19)+' UTC';}
+setInterval(updateClock,1000);updateClock();
+function setFilterByPlatform(pf){document.querySelectorAll('.filter-pill').forEach(function(p){p.classList.remove('active');if(p.getAttribute('data-pf')===pf)p.classList.add('active');});activeFilter=pf;renderTopics(allTopics);var el=document.getElementById('trending');if(el)el.scrollIntoView({behavior:'smooth'});}
+function setFilter(pf,el){activeFilter=pf;document.querySelectorAll('.filter-pill').forEach(function(p){p.classList.remove('active')});el.classList.add('active');renderTopics(allTopics);}
+function filterTopics(){renderTopics(allTopics);}
+function getFilteredTopics(topics){var q=(document.getElementById('search-input').value||'').toLowerCase().trim();return topics.filter(function(t){if(activeFilter==='cross')return t.cross_platform;if(activeFilter!=='all')return(t.platforms||[]).indexOf(activeFilter)>=0;return true;}).filter(function(t){return!q||t.topic.toLowerCase().indexOf(q)>=0;});}
+function renderTopics(topics){
+  allTopics=topics;
+  var filtered=getFilteredTopics(topics);
+  var grid=document.getElementById('topics-grid');
+  if(!filtered.length){grid.innerHTML='<div style="padding:48px;color:var(--sub);font-family:\'JetBrains Mono\',monospace;font-size:12px">no topics match filter</div>';return;}
+  var max=filtered[0].trend_score||1;
+  grid.style.opacity='0';grid.style.transition='opacity .3s';
+  grid.innerHTML=filtered.slice(0,24).map(function(t){
+    var pct=((t.trend_score/max)*100).toFixed(1);
+    var s=t.avg_sentiment||0;
+    var sc=s>0.05?'var(--green)':s<-0.05?'var(--red)':'var(--sub)';
+    var sentStr=(s>=0?'+':'')+s.toFixed(2);
+    var icons=(t.platforms||[]).map(function(p){return pfIcon(p)}).join('');
+    var crossBadge=t.cross_platform?'<span class="tc-chip tc-cross">&#10022; CROSS-PLATFORM</span>':'<span class="tc-chip tc-single">SINGLE</span>';
+    return'<div class="topic-card" onclick="window.open(\'/api/v1/pulse/?topic='+encodeURIComponent(t.topic)+'\',\'_blank\')">'
+      +'<div class="tc-top"><span class="tc-name">'+esc(t.topic)+'</span><span class="tc-sent" style="color:'+sc+'">'+sentStr+'</span></div>'
+      +'<div class="tc-badges">'+crossBadge+'<span class="tc-chip tc-single">'+t.signal_count+' signals</span></div>'
+      +'<div class="tc-bar-w"><div class="tc-bar" style="width:'+pct+'%;background:linear-gradient(90deg,'+( t.cross_platform?'var(--accent)':'var(--dim)' )+',var(--green))"></div></div>'
+      +'<div class="tc-platforms">'+icons+'</div>'
+      +'</div>';
   }).join('');
-
-  return `<div class="signal-row" style="animation-delay:${delay}ms">
-    <div class="s-topic">
-      <span class="s-topic-name">${topic}</span>
-      <div class="platform-stack">${pltsHtml}</div>
-    </div>
-    <div class="s-velocity ${velUp ? 'vel-up' : 'vel-down'}">${velStr}</div>
-    <div class="s-sentiment">
-      <div class="sent-bar">
-        <div class="sent-fill ${sentClass}" style="width:${sentWidth}px"></div>
-      </div>
-    </div>
-    <div class="s-platforms">${platforms.length} platform${platforms.length !== 1 ? 's' : ''}</div>
-    <div class="s-trending">
-      <span class="trend-badge ${trendClass}">${trendLabel}</span>
-    </div>
-  </div>`;
+  requestAnimationFrame(function(){grid.style.opacity='1';});
 }
-
-function renderLiveFeed() {
-  const feed = document.getElementById('signal-feed');
-  if (!liveSignals.length) return;
-  feed.innerHTML = liveSignals.slice(0, 7).map((s, i) => buildLiveRow(s, i * 60)).join('');
-}
-
-function renderLiveTicker(items) {
-  const double = [...items, ...items];
-  document.getElementById('ticker').innerHTML = double.map(t => {
-    const vel = t.score_velocity || 0;
-    const velStr = vel >= 0 ? `↑ +${vel.toFixed(2)}/s` : `↓ ${vel.toFixed(2)}/s`;
-    const velCls = vel >= 0 ? 'tick-vel' : 'tick-neg';
-    const plts = t.platform || '';
-    return `<div class="tick-item">
-      <span class="tick-topic">${t.topic || t.name || ''}</span>
-      <span class="${velCls}">${velStr}</span>
-      <span class="tick-plts">${plts}</span>
-    </div>`;
+function renderPropagation(topics){
+  var cross=topics.filter(function(t){return t.cross_platform&&(t.platforms||[]).length>=2;});
+  var el=document.getElementById('connected-grid');
+  var cc=document.getElementById('cross-count');if(cc)cc.textContent=cross.length+' connected topics';
+  var ci=document.getElementById('kpi-cross-inline');if(ci)ci.textContent=cross.length;
+  if(!cross.length){el.innerHTML='<div style="padding:20px;color:var(--sub);font-family:\'JetBrains Mono\',monospace;font-size:11px">no cross-platform topics</div>';return;}
+  el.innerHTML=cross.slice(0,12).map(function(t){
+    var icons=(t.platforms||[]).map(function(p){return pfIcon(p)}).join('');
+    return'<div class="conn-card" onclick="window.open(\'/api/v1/pulse/?topic='+encodeURIComponent(t.topic)+'\',\'_blank\')">'
+      +'<div class="conn-name">'+esc(t.topic)+'</div>'
+      +'<div class="conn-platforms">'+icons+'</div>'
+      +'<div class="conn-stat">'+t.signal_count+' signals &middot; score '+Math.round(t.trend_score)+'</div>'
+      +'</div>';
   }).join('');
 }
-
-function updateFeedTime() {
-  const el = document.getElementById('feed-time');
-  if (el) el.textContent = 'just now';
+function renderPlatforms(topics){
+  var byPf={};topics.forEach(function(t){(t.platforms||[]).forEach(function(p){byPf[p]=(byPf[p]||0)+1;});});
+  var pfs=['reddit','hackernews','bluesky','youtube'];
+  var colors={reddit:'var(--reddit)',hackernews:'var(--hn)',bluesky:'var(--bsky)',youtube:'var(--yt)'};
+  var rates={reddit:'~180 / hr',hackernews:'~30 / hr',bluesky:'~2,400 / hr',youtube:'~800 / 4hr'};
+  document.getElementById('pf-grid').innerHTML=pfs.map(function(p){
+    var cnt=byPf[p]||0;
+    var top=(topics.find(function(t){return(t.platforms||[]).indexOf(p)>=0;})||{}).topic||'—';
+    var pct=Math.min(100,cnt*4);
+    return'<div class="pf-stat" onclick="setFilterByPlatform(\''+p+'\')">'
+      +'<div class="pf-stat-head">'+( PF_SVG[p]||'' )+'<div class="pf-stat-name" style="color:'+colors[p]+'">'+p+'</div></div>'
+      +'<div class="pf-num" id="pf-total-'+p+'">--</div>'
+      +'<div class="pf-rate">'+rates[p]+'</div>'
+      +'<div class="pf-top-topic">&#8593; '+esc(top)+'</div>'
+      +'<div class="pf-bar-w"><div class="pf-bar" style="width:'+pct+'%;background:'+colors[p]+'"></div></div>'
+      +'</div>';
+  }).join('');
 }
-
-// init live data
-(async () => {
-  const ok = await getDemoToken();
-  if (ok) {
-    await Promise.all([fetchLiveSignals(), fetchLiveTicker()]);
-    // refresh feed every 30s
-    setInterval(fetchLiveSignals, 30000);
-    setInterval(fetchLiveTicker, 60000);
-  }
-})();
-
-// update timestamp display
-setInterval(() => {
-  const el = document.getElementById('feed-time');
-  if (el) el.textContent = 'just now';
-}, 5000);
-
-// ── TICKER ──
-const tickerItems = [
-  { topic:'openai', vel:'+1.87/s', plts:'Reddit · HN · Bluesky · YT', dir:'↑' },
-  { topic:'quantum computing', vel:'+3.85/s', plts:'Reddit · HN · Bluesky', dir:'↑' },
-  { topic:'anthropic', vel:'+2.14/s', plts:'HN · Bluesky · YT', dir:'↑' },
-  { topic:'nvidia', vel:'+4.21/s', plts:'Reddit · HN · YT', dir:'↑' },
-  { topic:'rust lang', vel:'+0.94/s', plts:'HN · Reddit', dir:'↑' },
-  { topic:'iran', vel:'-0.23/s', plts:'Reddit · HN · Bluesky', dir:'↓' },
-  { topic:'claude', vel:'+1.53/s', plts:'HN · Bluesky', dir:'↑' },
-  { topic:'bitcoin', vel:'+2.67/s', plts:'Reddit · Bluesky · YT', dir:'↑' },
-];
-
-function buildTicker() {
-  const double = [...tickerItems, ...tickerItems];
-  return double.map(t => `
-    <div class="tick-item">
-      <span class="tick-topic">${t.topic}</span>
-      <span class="${t.dir === '↑' ? 'tick-vel' : 'tick-neg'}">${t.dir} ${t.vel}</span>
-      <span class="tick-plts">${t.plts}</span>
-    </div>`).join('');
-}
-document.getElementById('ticker').innerHTML = buildTicker();
-
-// ── CODE PANELS ──
-const codeSnippets = {
-  signals: {
-    lang: 'RESPONSE — /api/v1/signals/',
-    code: `<span class="cm">// GET /api/v1/signals/</span>
-<span class="cm">// Authorization: Bearer &lt;token&gt;</span>
-
-{
-  <span class="k">"id"</span>: <span class="str">"xyz789"</span>,
-  <span class="k">"platform"</span>: <span class="str">"reddit"</span>,
-  <span class="k">"title"</span>: <span class="str">"New breakthrough in quantum computing"</span>,
-  <span class="k">"raw_score"</span>: <span class="nu">1200</span>,
-  <span class="k">"score_velocity"</span>: <span class="nu">3.85</span>,
-  <span class="k">"comment_velocity"</span>: <span class="nu">0.14</span>,
-  <span class="k">"trending_score"</span>: <span class="nu">0.60</span>,
-  <span class="k">"is_trending"</span>: <span class="kw">true</span>,
-  <span class="k">"sentiment_compound"</span>: <span class="nu">0.34</span>,
-  <span class="k">"sentiment_label"</span>: <span class="str">"positive"</span>,
-  <span class="k">"topics"</span>: [<span class="str">"quantum computing"</span>, <span class="str">"ibm"</span>],
-  <span class="k">"first_seen"</span>: <span class="str">"2026-03-05T06:30:00Z"</span>,
-  <span class="k">"last_updated"</span>: <span class="str">"2026-03-05T06:35:00Z"</span>
-}`
-  },
-  trending: {
-    lang: 'RESPONSE — /api/v1/trending/',
-    code: `<span class="cm">// GET /api/v1/trending/?platform=reddit&window=1h</span>
-
-[
-  {
-    <span class="k">"topic"</span>: <span class="str">"nvidia"</span>,
-    <span class="k">"trending_score"</span>: <span class="nu">0.80</span>,
-    <span class="k">"score_velocity"</span>: <span class="nu">4.21</span>,
-    <span class="k">"platform_count"</span>: <span class="nu">3</span>,
-    <span class="k">"platforms"</span>: [<span class="str">"reddit"</span>, <span class="str">"hackernews"</span>, <span class="str">"youtube"</span>],
-    <span class="k">"first_seen"</span>: <span class="str">"2026-03-05T06:15:00Z"</span>
-  },
-  {
-    <span class="k">"topic"</span>: <span class="str">"quantum computing"</span>,
-    <span class="k">"trending_score"</span>: <span class="nu">0.60</span>,
-    <span class="k">"score_velocity"</span>: <span class="nu">3.85</span>,
-    <span class="k">"platform_count"</span>: <span class="nu">3</span>,
-    <span class="k">"platforms"</span>: [<span class="str">"reddit"</span>, <span class="str">"hackernews"</span>, <span class="str">"bluesky"</span>]
-  }
-]`
-  },
-  compare: {
-    lang: 'RESPONSE — /api/v1/compare/',
-    code: `<span class="cm">// GET /api/v1/compare/</span>
-<span class="cm">// Cross-platform divergence events</span>
-
-{
-  <span class="k">"topic"</span>: <span class="str">"anthropic"</span>,
-  <span class="k">"origin_platform"</span>: <span class="str">"hackernews"</span>,
-  <span class="k">"spread_minutes"</span>: <span class="nu">30</span>,
-  <span class="k">"platforms"</span>: [<span class="str">"hackernews"</span>, <span class="str">"reddit"</span>, <span class="str">"bluesky"</span>],
-  <span class="k">"peak_signal_count"</span>: <span class="nu">110</span>,
-  <span class="k">"delta_score"</span>: <span class="nu">842</span>,
-  <span class="k">"sentiment"</span>: <span class="nu">0.27</span>,
-  <span class="k">"first_seen"</span>: <span class="str">"2026-03-05T05:30:00Z"</span>,
-  <span class="k">"last_seen"</span>: <span class="str">"2026-03-05T07:45:00Z"</span>
-}`
-  },
-  pulse: {
-    lang: 'RESPONSE — /api/v1/pulse/',
-    code: `<span class="cm">// GET /api/v1/pulse/?topic=openai</span>
-
-{
-  <span class="k">"topic"</span>: <span class="str">"openai"</span>,
-  <span class="k">"avg_sentiment"</span>: <span class="nu">-0.011</span>,
-  <span class="k">"sentiment_label"</span>: <span class="str">"neutral"</span>,
-  <span class="k">"signal_count"</span>: <span class="nu">1696</span>,
-  <span class="k">"platform_count"</span>: <span class="nu">3</span>,
-  <span class="k">"platforms"</span>: [<span class="str">"reddit"</span>, <span class="str">"hackernews"</span>, <span class="str">"bluesky"</span>],
-  <span class="k">"entities"</span>: [<span class="str">"Sam Altman"</span>, <span class="str">"GPT-5"</span>, <span class="str">"OpenAI"</span>],
-  <span class="k">"peak_trending"</span>: <span class="nu">0.60</span>,
-  <span class="k">"window"</span>: <span class="str">"24h"</span>
-}`
-  },
-  ws: {
-    lang: 'WEBSOCKET — ws://signalflo.in/ws/signals/',
-    code: `<span class="cm">// Connect once. Receive every enriched signal as it flushes.</span>
-
-<span class="kw">const</span> ws = <span class="kw">new</span> <span class="fn">WebSocket</span>(
-  <span class="str">'ws://signalflo.in/ws/signals/'</span>,
-  [<span class="str">'Bearer'</span>, token]
-);
-
-ws.<span class="fn">onmessage</span> = (event) => {
-  <span class="kw">const</span> signal = <span class="fn">JSON.parse</span>(event.data);
-  <span class="cm">// signal.score_velocity → 3.85</span>
-  <span class="cm">// signal.is_trending   → true</span>
-  <span class="cm">// signal.topics        → ["quantum computing"]</span>
-  <span class="fn">updateDashboard</span>(signal);
-};
-
-<span class="cm">// No polling. Fires on every batch flush (~2s latency).</span>`
-  },
-  token: {
-    lang: 'AUTH — /api/token/',
-    code: `<span class="cm">// POST /api/token/</span>
-
-<span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://signalflo.in/api/token/'</span>, {
-  method: <span class="str">'POST'</span>,
-  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
-  body: <span class="fn">JSON.stringify</span>({
-    username: <span class="str">'your_username'</span>,
-    password: <span class="str">'your_password'</span>
-  })
-});
-
-<span class="kw">const</span> { access, refresh } = <span class="kw">await</span> res.<span class="fn">json</span>();
-
-<span class="cm">// access  → use in Authorization: Bearer header (60min)</span>
-<span class="cm">// refresh → POST /api/token/refresh/ to rotate</span>`
-  }
-};
-
-function showCode(key) {
-  const s = codeSnippets[key];
-  document.getElementById('code-display').innerHTML = s.code;
-  document.getElementById('code-lang').textContent = s.lang;
-  document.querySelectorAll('.ep-card').forEach(c => c.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-}
-
-function copyCode() {
-  const text = document.getElementById('code-display').innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.cp-copy');
-    btn.textContent = 'copied!';
-    setTimeout(() => btn.textContent = 'copy', 1500);
+function renderIntelligence(topics){
+  var src=topics.filter(function(t){return t.cross_platform;}).slice(0,4);
+  if(!src.length)src=topics.slice(0,4);
+  var grid=document.getElementById('intel-grid');
+  grid.innerHTML='<div style="grid-column:1/-1;padding:40px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--sub)">fetching intelligence...</div>';
+  var fetched=0,cards=[];
+  src.forEach(function(t,i){
+    fetch('/api/v1/pulse/?topic='+encodeURIComponent(t.topic),{headers:{Accept:'application/json'}})
+      .then(function(r){return r.json()})
+      .then(function(data){cards[i]=buildIntelCard(t.topic,data);done();})
+      .catch(function(){done();});
+    function done(){fetched++;if(fetched===src.length){var html=cards.filter(Boolean).join('');grid.innerHTML=html||'<div style="padding:32px;color:var(--sub);font-family:\'JetBrains Mono\',monospace;font-size:11px">intelligence not yet available</div>';}}
   });
 }
-
-// ── SCROLL ANIMATIONS ──
-// Make all fade-up elements visible immediately on load (no observer needed)
-document.querySelectorAll('.fade-up').forEach(el => {
-  el.classList.add('visible');
-});
-
-// Also use observer for elements below fold
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-    }
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-// ── MOBILE MENU ──
-function toggleMenu() {
-  const menu = document.getElementById('mobile-nav');
-  const btn = document.getElementById('hamburger');
-  const isOpen = menu.classList.contains('open');
-  if (isOpen) {
-    menu.classList.remove('open');
-    btn.classList.remove('open');
-    document.body.style.overflow = '';
-  } else {
-    menu.classList.add('open');
-    btn.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
+function buildIntelCard(topic,data){
+  var intel=data.intelligence;if(!intel||!intel.summary)return null;
+  var s=data.overall_sentiment||0;
+  var sc=s>0.05?'var(--green)':s<-0.05?'var(--red)':'var(--sub)';
+  var sentStr=(s>=0?'+':'')+s.toFixed(2);
+  var age=intel.generated_at?ago(intel.generated_at):'';
+  var pfs=Object.keys(data.platforms||{});
+  var icons=pfs.map(function(p){return pfIcon(p)}).join('');
+  var divBlock=intel.divergence_explanation?'<div class="intel-diverg"><div class="intel-label" style="color:var(--accent);margin-bottom:6px">&#10022; Platform Divergence</div><div class="intel-text" style="font-size:12px">'+esc(intel.divergence_explanation)+'</div></div>':'';
+  return'<div class="intel-card">'
+    +'<div class="intel-head"><span class="intel-topic">'+esc(topic)+'</span><div class="intel-meta"><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:'+sc+'">'+sentStr+'</span>'+(age?'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--dim)">'+age+'</span>':'')+'</div></div>'
+    +'<div class="intel-body">'
+      +'<div><div class="intel-label" style="color:var(--sub)">Summary</div><p class="intel-text">'+esc(intel.summary)+'</p></div>'
+      +(intel.dominant_narrative?'<div><div class="intel-label" style="color:var(--accent)">Dominant Narrative</div><p class="intel-text" style="color:var(--text);font-weight:500">'+esc(intel.dominant_narrative)+'</p></div>':'')
+      +(intel.emerging_angle?'<div><div class="intel-label" style="color:var(--green)">Emerging Angle</div><p class="intel-text">'+esc(intel.emerging_angle)+'</p></div>':'')
+      +divBlock
+      +'<div class="intel-platforms">'+icons+'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--dim);margin-left:6px">'+(data.signal_count||0)+' signals</span></div>'
+    +'</div></div>';
 }
-function closeMenu() {
-  document.getElementById('mobile-nav').classList.remove('open');
-  document.getElementById('hamburger').classList.remove('open');
-  document.body.style.overflow = '';
+var API_ENDPOINTS={
+  trending:{url:'/api/v1/trending/?platform=all&window_minutes=240&limit=5',label:'live · /api/v1/trending/'},
+  pulse:{url:'/api/v1/pulse/?topic=iran',label:'live · /api/v1/pulse/?topic=iran'},
+  signals:{url:'/api/v1/signals/?limit=3&ordering=-first_seen_at',label:'live · /api/v1/signals/'},
+  stats:{url:'/api/v1/stats/totals/',label:'live · /api/v1/stats/totals/'},
+  compare:{url:'/api/v1/compare/',label:'live · /api/v1/compare/'}
+};
+function loadApiPreview(key,el){
+  document.querySelectorAll('.ep').forEach(function(e){e.classList.remove('active')});
+  if(el)el.classList.add('active');
+  var ep=API_ENDPOINTS[key];
+  document.getElementById('code-label').textContent=ep.label;
+  document.getElementById('api-code').innerHTML='<span class="t-comment">// fetching...</span>';
+  fetch(ep.url,{headers:{Accept:'application/json'}}).then(function(r){return r.json()}).then(function(data){document.getElementById('api-code').innerHTML=jsonToHtml(data,0);}).catch(function(e){document.getElementById('api-code').innerHTML='<span class="t-comment">// error: '+esc(String(e))+'</span>';});
 }
-// close on outside click
-document.addEventListener('click', e => {
-  const menu = document.getElementById('mobile-nav');
-  const btn = document.getElementById('hamburger');
-  if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
-    closeMenu();
-  }
+function jsonToHtml(obj,depth){
+  if(depth>3)return'<span class="t-comment">...</span>';
+  if(obj===null)return'<span class="t-null">null</span>';
+  if(typeof obj==='boolean')return'<span class="t-bool">'+obj+'</span>';
+  if(typeof obj==='number')return'<span class="t-num">'+obj+'</span>';
+  if(typeof obj==='string'){var s=obj.length>120?obj.slice(0,120)+'...':obj;return'<span class="t-str">"'+esc(s)+'"</span>';}
+  if(Array.isArray(obj)){if(!obj.length)return'<span class="t-key">[]</span>';var items=obj.slice(0,3).map(function(v){return pad(depth+1)+jsonToHtml(v,depth+1)});if(obj.length>3)items.push(pad(depth+1)+'<span class="t-comment">// +'+(obj.length-3)+' more</span>');return'<span class="t-key">[</span>\n'+items.join(',\n')+'\n'+pad(depth)+'<span class="t-key">]</span>';}
+  if(typeof obj==='object'){var keys=Object.keys(obj).slice(0,12);var pairs=keys.map(function(k){return pad(depth+1)+'<span class="t-key">"'+esc(k)+'"</span>: '+jsonToHtml(obj[k],depth+1)});if(Object.keys(obj).length>12)pairs.push(pad(depth+1)+'<span class="t-comment">// +more</span>');return'<span class="t-key">{</span>\n'+pairs.join(',\n')+'\n'+pad(depth)+'<span class="t-key">}</span>';}
+  return esc(String(obj));
+}
+function pad(d){return'  '.repeat(d);}
+function copyCode(){var el=document.getElementById('api-code');if(el)navigator.clipboard.writeText(el.innerText).then(function(){var btn=document.querySelector('.code-copy');if(btn){btn.textContent='copied!';setTimeout(function(){btn.textContent='copy'},1500);}});}
+function loadStats(){
+  fetch('/api/v1/stats/totals/',{headers:{Accept:'application/json'}}).then(function(r){return r.json()}).then(function(d){
+    var a=d.all_time,h=d.last_24h;
+    function setKpi(id,val){var el=document.getElementById(id);if(!el)return;el.textContent=fmtNum(val);}
+    setKpi('kpi-total',a.total);setKpi('kpi-reddit',a.reddit);setKpi('kpi-bluesky',a.bluesky);setKpi('kpi-youtube',a.youtube);setKpi('kpi-hn',a.hackernews);
+    setKpi('kpi-24h-total',h.total);setKpi('kpi-24h-reddit',h.reddit);setKpi('kpi-24h-bluesky',h.bluesky);setKpi('kpi-24h-youtube',h.youtube);setKpi('kpi-24h-hn',h.hackernews);
+    var pTotals={reddit:fmtNum(a.reddit),hackernews:fmtNum(a.hackernews),youtube:fmtNum(a.youtube),bluesky:fmtNum(a.bluesky)};
+    Object.keys(pTotals).forEach(function(p){var el=document.getElementById('pf-total-'+p);if(el)el.textContent=pTotals[p];});
+  }).catch(function(e){console.warn('stats:',e);});
+}
+function loadTrending(){
+  fetch('/api/v1/trending/?platform=all&window_minutes=240&limit=25',{headers:{Accept:'application/json'}}).then(function(r){return r.json()}).then(function(data){
+    var topics=data.topics||[];
+    var kt=document.getElementById('kpi-topics-inline');if(kt)kt.textContent=topics.length;
+    var tt=document.getElementById('trend-ts');if(tt)tt.textContent=(data.generated_at||'').slice(11,19)+'z';
+    renderTopics(topics);renderPropagation(topics);renderPlatforms(topics);renderIntelligence(topics);
+    if(topics.length){currentTrendingTopic=topics[0].topic;API_ENDPOINTS.pulse.url='/api/v1/pulse/?topic='+encodeURIComponent(currentTrendingTopic);}
+  }).catch(function(e){console.warn('trending:',e);});
+}
+function openModal(){document.getElementById('access-modal').classList.add('open');document.getElementById('modal-form-state').style.display='block';document.getElementById('modal-key-state').classList.remove('show');setTimeout(function(){document.getElementById('access-name').focus();},100);}
+function closeModal(){document.getElementById('access-modal').classList.remove('open');}
+function closeModalOutside(e){if(e.target===document.getElementById('access-modal'))closeModal();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+function submitAccessRequest(){
+  var name=document.getElementById('access-name').value.trim();
+  var email=document.getElementById('access-email').value.trim();
+  var errEl=document.getElementById('form-error');
+  var btn=document.getElementById('submit-btn');
+  errEl.style.display='none';
+  if(!name){errEl.textContent='Name is required.';errEl.style.display='block';return;}
+  if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){errEl.textContent='Please enter a valid email address.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Generating...';
+  fetch('/api/v1/access/request/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({name:name,email:email})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.token){document.getElementById('key-display').textContent=d.token;document.getElementById('modal-form-state').style.display='none';document.getElementById('modal-key-state').classList.add('show');}
+      else{errEl.textContent=d.error||'Something went wrong.';errEl.style.display='block';}
+      btn.disabled=false;btn.textContent='Generate API Key →';
+    }).catch(function(){errEl.textContent='Network error. Please try again.';errEl.style.display='block';btn.disabled=false;btn.textContent='Generate API Key →';});
+}
+function copyApiKey(){var key=document.getElementById('key-display').textContent;navigator.clipboard.writeText(key).then(function(){var btn=document.querySelector('.key-copy-btn');btn.textContent='COPIED ✓';setTimeout(function(){btn.textContent='COPY KEY';},2000);});}
+function getCookie(name){var v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)');return v?v[2]:null;}
+window.addEventListener('DOMContentLoaded',function(){
+  loadStats();
+  loadTrending();
+  initGrafana();
+  loadApiPreview('trending',document.querySelector('.ep'));
 });
+setInterval(function(){loadStats();loadTrending();},60000);
 </script>
 </body>
 </html>

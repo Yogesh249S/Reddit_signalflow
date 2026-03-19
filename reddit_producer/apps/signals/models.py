@@ -131,6 +131,41 @@ class PlatformDivergence(models.Model):
         return f"{self.topic}: {self.platform_a} vs {self.platform_b} ({self.divergence_score:.2f})"
 
 
+class TopicSummary(models.Model):
+    """
+    LLM-generated intelligence for a trending topic.
+    Written by topic_summariser.py every 15 minutes — outside the hot path.
+    Read-only from Django's perspective (managed=False, summariser owns the table).
+    """
+    topic                  = models.TextField()
+    window_minutes         = models.IntegerField(default=60)
+    generated_at           = models.DateTimeField()
+
+    # LLM narrative fields
+    summary_text           = models.TextField(null=True)
+    divergence_explanation = models.TextField(null=True)
+    dominant_narrative     = models.TextField(null=True)
+    emerging_angle         = models.TextField(null=True)
+
+    # Metadata
+    signal_count           = models.IntegerField(null=True)
+    platform_count         = models.IntegerField(null=True)
+    platforms              = models.JSONField(default=list)
+    avg_sentiment          = models.FloatField(null=True)
+    model_used             = models.TextField(null=True)
+    prompt_tokens          = models.IntegerField(null=True)
+    completion_tokens      = models.IntegerField(null=True)
+    latency_ms             = models.IntegerField(null=True)
+
+    class Meta:
+        managed  = False
+        db_table = "topic_summaries"
+        ordering = ["-generated_at"]
+
+    def __str__(self):
+        return f"{self.topic} @ {self.generated_at:%Y-%m-%d %H:%M}"
+
+
 class SourceConfig(models.Model):
     """
     Replaces: SubredditConfig

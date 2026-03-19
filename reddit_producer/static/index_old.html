@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalFlow — Cross-Platform Signal Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--bg2:#111114;--bg3:#18181c;--bg4:#1e1e23;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#d4d4d8;--sub:#71717a;--dim:#3f3f46;
+  --gold:#c9a84c;--gold2:#e8c76a;--gold3:rgba(201,168,76,0.12);
+  --green:#22c55e;--red:#ef4444;--blue:#60a5fa;
+  --reddit:#ff5722;--hn:#f59e0b;--bsky:#3b82f6;--yt:#ef4444;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(10,10,11,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
+.nav-links{display:flex;gap:2px}
+.nav-link{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:4px 10px;border-radius:3px;transition:color .15s}
+.nav-link:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.live-pill{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;color:var(--green);border:1px solid rgba(34,197,94,.25);padding:3px 9px;border-radius:2px}
+.live-dot{width:4px;height:4px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.nav-cta{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--gold);border:1px solid rgba(201,168,76,.35);padding:5px 14px;border-radius:3px;transition:all .15s}
+.nav-cta:hover{background:var(--gold3);border-color:var(--gold)}
+
+/* HERO */
+.hero{padding:72px 32px 60px;text-align:center;border-bottom:1px solid var(--border);background:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.06) 0%, transparent 70%)}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.3);padding:4px 12px;border-radius:2px;margin-bottom:28px}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(48px,7vw,88px);font-weight:800;line-height:1;letter-spacing:-.02em;color:#fff;margin-bottom:20px}
+.hero-title span{color:var(--gold)}
+.hero-desc{font-size:15px;font-weight:300;color:var(--sub);max-width:580px;margin:0 auto 32px;line-height:1.8}
+.hero-desc b{color:var(--text);font-weight:400}
+.filter-row{display:flex;justify-content:center;gap:6px;margin-bottom:32px;flex-wrap:wrap}
+.filter-pill{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:2px;border:1px solid var(--border);color:var(--sub);cursor:pointer;transition:all .15s;background:transparent}
+.filter-pill:hover{border-color:var(--gold);color:var(--gold)}
+.filter-pill.active{background:var(--gold3);border-color:var(--gold);color:var(--gold)}
+.search-wrap{display:flex;justify-content:center;margin-bottom:48px}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border2);border-radius:4px;padding:10px 16px;width:100%;max-width:520px;transition:border-color .15s}
+.search-box:focus-within{border-color:var(--gold)}
+.search-icon{color:var(--sub);font-size:12px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;width:100%;font-weight:300}
+.search-box input::placeholder{color:var(--dim)}
+.hero-kpis{display:flex;justify-content:center;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;max-width:700px;margin:0 auto}
+.hkpi{flex:1;padding:20px 24px;text-align:center;border-right:1px solid var(--border)}
+.hkpi:last-child{border-right:none}
+.hkpi-val{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px}
+.hkpi-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub)}
+
+/* SKELETONS */
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:3px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-val{height:36px;width:80px;margin:0 auto 6px;}
+.skel-lbl{height:10px;width:60px;margin:0 auto;}
+.skel-card{height:140px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:0;}
+.skel-intel{height:180px;border-radius:4px;margin-bottom:16px;}
+.skel-text-line{height:12px;border-radius:2px;margin-bottom:8px;}
+.skel-text-line.w100{width:100%}.skel-text-line.w80{width:80%}.skel-text-line.w60{width:60%}
+.fade-in{opacity:0;animation:fadeIn .4s ease forwards;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION */
+.section{padding:52px 32px;border-bottom:1px solid var(--border)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.section-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub)}
+.section-rule{height:1px;background:var(--border);margin-bottom:24px}
+.see-all{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);border:1px solid var(--border);padding:4px 10px;border-radius:2px;transition:all .15s;cursor:pointer}
+.see-all:hover{color:var(--gold);border-color:var(--gold)}
+
+/* TRENDING TOPICS */
+.topics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1px;background:var(--border);border:1px solid var(--border)}
+.topic-card{background:var(--bg);padding:20px;transition:background .15s;cursor:default;position:relative;overflow:hidden}
+.topic-card:hover{background:var(--bg2)}
+.topic-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--gold);opacity:0;transition:opacity .15s}
+.topic-card:hover::before{opacity:1}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.tc-name{font-size:15px;font-weight:500;color:#fff;line-height:1.2}
+.tc-score{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);flex-shrink:0;margin-left:12px}
+.tc-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tc-chip{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;padding:2px 7px;border-radius:2px;letter-spacing:.04em}
+.tc-cross{background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25)}
+.tc-single{background:rgba(113,113,122,.1);color:var(--sub);border:1px solid var(--border)}
+.tc-bar-w{height:2px;background:var(--bg3);border-radius:1px;overflow:hidden}
+.tc-bar{height:100%;border-radius:1px;transition:width .6s ease}
+.tc-platforms{display:flex;gap:4px;margin-top:8px}
+.tc-pf{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:500;padding:2px 6px;border-radius:1px;letter-spacing:.04em}
+.tc-sent{font-family:'JetBrains Mono',monospace;font-size:9px;margin-top:6px}
+
+/* PROPAGATION */
+.connected-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.conn-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:16px;transition:border-color .15s}
+.conn-card:hover{border-color:var(--border2)}
+.conn-name{font-size:13px;font-weight:500;color:#fff;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn-badge{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);background:var(--gold3);border:1px solid rgba(201,168,76,.2);padding:2px 7px;border-radius:2px;margin-bottom:8px}
+.conn-platforms{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px}
+.conn-stat{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub)}
+
+/* INTELLIGENCE SECTION */
+.intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.intel-card{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;overflow:hidden;transition:border-color .2s}
+.intel-card:hover{border-color:rgba(201,168,76,.3)}
+.intel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.intel-topic{font-size:14px;font-weight:600;color:#fff}
+.intel-meta{display:flex;align-items:center;gap:8px}
+.intel-age{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim)}
+.intel-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.intel-row{}
+.intel-row-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.intel-row-text{font-size:12px;color:var(--text);line-height:1.6}
+.intel-row-text.dim{color:var(--sub)}
+.intel-diverg{padding:10px 14px;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:3px;margin-top:4px}
+.intel-diverg-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--green);letter-spacing:.1em;margin-bottom:3px}
+.intel-diverg-text{font-size:11px;color:var(--sub);line-height:1.5}
+.intel-platforms{display:flex;gap:4px;margin-top:4px}
+.intel-sent{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500}
+.intel-loading{padding:48px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub)}
+
+/* GRAFANA */
+.grafana-wrap{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--bg2)}
+.grafana-bar{height:36px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.grafana-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--sub);letter-spacing:.08em}
+.grafana-badge{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);border:1px solid rgba(34,197,94,.2);padding:2px 8px;border-radius:2px}
+.grafana-frame{width:100%;height:400px;border:none;display:block}
+.grafana-fallback{height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--sub)}
+.grafana-fallback-icon{font-size:32px;opacity:.3}
+.grafana-fallback-text{font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;line-height:1.8}
+
+/* PLATFORM STATS */
+.platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border)}
+.pf-stat{background:var(--bg);padding:24px 20px;transition:background .15s}
+.pf-stat:hover{background:var(--bg2)}
+.pf-name{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.pf-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px}
+.pf-rate{font-size:11px;color:var(--sub);margin-bottom:12px}
+.pf-top-topic{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.pf-bar-w{height:2px;background:var(--bg3);border-radius:1px}
+.pf-bar{height:100%;border-radius:1px;opacity:.7}
+
+/* API */
+.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.endpoint-list{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.ep{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;transition:border-color .15s;cursor:pointer}
+.ep:hover{border-color:var(--gold)}
+.ep.active{border-color:rgba(201,168,76,.4);background:var(--gold3)}
+.ep-method{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;padding:2px 7px;border-radius:2px;background:rgba(59,130,246,.12);color:var(--blue);flex-shrink:0;letter-spacing:.04em}
+.ep-path{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)}
+.ep-desc{font-size:11px;color:var(--sub);margin-left:auto;flex-shrink:0;text-align:right}
+.code-block{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;overflow:hidden}
+.code-top{height:32px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;justify-content:space-between}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--sub)}
+.code-copy{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim);cursor:pointer;border:none;background:none;letter-spacing:.06em;transition:color .15s;padding:0}
+.code-copy:hover{color:var(--text)}
+.code-body{padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.85;overflow-x:auto;min-height:280px;max-height:400px;overflow-y:auto}
+.t-key{color:var(--sub)}.t-str{color:#a3e635}.t-num{color:#fb923c}.t-bool{color:var(--blue)}.t-comment{color:var(--dim);font-style:italic}.t-null{color:var(--red)}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+.faq-item{background:var(--bg);padding:20px 24px}
+.faq-q{font-size:13px;font-weight:500;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.faq-q::before{content:'Q';font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);flex-shrink:0;border:1px solid rgba(201,168,76,.3);padding:1px 5px;border-radius:1px}
+.faq-a{font-size:13px;color:var(--sub);line-height:1.7;padding-left:28px}
+
+/* CTA */
+.cta-section{padding:72px 32px;text-align:center;background:var(--bg2);border-top:1px solid var(--border)}
+.cta-title{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:-.02em}
+.cta-title em{color:var(--gold);font-style:italic}
+.cta-sub{font-size:14px;color:var(--sub);margin-bottom:32px;font-weight:300}
+.cta-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-gold{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--bg);background:var(--gold);border:none;padding:12px 28px;border-radius:3px;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block}
+.btn-gold:hover{background:var(--gold2)}
+.btn-outline{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--sub);background:transparent;border:1px solid var(--border2);padding:12px 28px;border-radius:3px;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block}
+.btn-outline:hover{color:var(--text);border-color:var(--text)}
+
+/* FOOTER */
+footer{padding:36px 32px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr auto auto;gap:32px;align-items:start}
+.footer-brand{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px}
+.footer-note{font-size:11px;color:var(--dim);line-height:1.6;max-width:300px}
+.footer-col-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-bottom:12px}
+.footer-links{display:flex;flex-direction:column;gap:6px}
+.footer-link{font-size:12px;color:var(--dim);transition:color .15s}
+.footer-link:hover{color:var(--sub)}
+
+@media(max-width:900px){
+  .hero-kpis{flex-wrap:wrap}.hkpi{min-width:50%}
+  .topics-grid{grid-template-columns:1fr}
+  .intel-grid{grid-template-columns:1fr}
+  .platform-grid{grid-template-columns:1fr 1fr}
+  .api-grid{grid-template-columns:1fr}
+  .connected-grid{grid-template-columns:1fr 1fr}
+  footer{grid-template-columns:1fr}
+  nav .nav-links{display:none}
+}
+
+/* ── API ACCESS MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(7,9,15,0.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:6px;padding:40px;width:100%;max-width:480px;
+  position:relative;
+  box-shadow:0 0 60px rgba(201,168,76,0.08);
+}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:18px;line-height:1;padding:4px 8px;
+  transition:color .15s;
+}
+.modal-close:hover{color:var(--text);}
+.modal-title{
+  font-family:'Playfair Display',serif;font-size:24px;
+  font-weight:700;color:#fff;margin-bottom:8px;
+}
+.modal-sub{font-size:13px;color:var(--sub);margin-bottom:28px;line-height:1.6;}
+.modal-sub b{color:var(--text);font-weight:400;}
+.form-group{margin-bottom:16px;}
+.form-label{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--sub);
+  display:block;margin-bottom:6px;
+}
+.form-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:3px;padding:10px 14px;color:var(--text);
+  font-family:'Sora',sans-serif;font-size:13px;outline:none;
+  transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--gold);}
+.form-input::placeholder{color:var(--dim);}
+.btn-submit{
+  width:100%;background:var(--gold);color:var(--bg);
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  font-weight:600;letter-spacing:.08em;border:none;
+  padding:12px;border-radius:3px;cursor:pointer;
+  transition:background .15s;margin-top:8px;
+}
+.btn-submit:hover{background:var(--gold2);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+.form-error{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--red);margin-top:8px;display:none;
+}
+/* key reveal state */
+.key-reveal{display:none;text-align:center;}
+.key-reveal.show{display:block;}
+.key-box{
+  background:var(--bg);border:1px solid rgba(201,168,76,.3);
+  border-radius:4px;padding:16px 20px;margin:20px 0;
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  color:var(--gold);letter-spacing:.05em;word-break:break-all;
+  position:relative;
+}
+.key-copy-btn{
+  display:block;width:100%;margin-top:4px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.08em;color:var(--sub);background:none;
+  border:1px solid var(--border);border-radius:3px;
+  padding:6px;cursor:pointer;transition:all .15s;
+}
+.key-copy-btn:hover{color:var(--gold);border-color:var(--gold);}
+.key-warning{
+  font-size:11px;color:var(--sub);line-height:1.6;
+  padding:10px 14px;background:rgba(255,171,0,.06);
+  border:1px solid rgba(255,171,0,.15);border-radius:3px;
+  margin-top:12px;
+}
+.key-limits{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-top:16px;
+}
+.key-limit-item{
+  padding:10px 14px;background:var(--bg3);border-radius:3px;
+  text-align:center;
+}
+.key-limit-val{
+  font-family:'JetBrains Mono',monospace;font-size:16px;
+  font-weight:600;color:#fff;display:block;margin-bottom:2px;
+}
+.key-limit-lbl{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  letter-spacing:.1em;color:var(--sub);text-transform:uppercase;
+}
+
+
+/* QUICKSTART TABS */
+.qs-tab{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:2px;
+  border:1px solid var(--border);color:var(--sub);cursor:pointer;transition:all .15s;}
+.qs-tab:hover{color:var(--text);border-color:var(--border2);}
+.qs-tab.active{background:var(--gold3);border-color:var(--gold);color:var(--gold);}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:24px">
+    <div class="nav-logo">SignalFlow</div>
+    <div class="nav-links">
+      <a href="#trending" class="nav-link">Trending</a>
+      <a href="#intelligence" class="nav-link">Intelligence</a>
+      <a href="#propagation" class="nav-link">Propagation</a>
+      <a href="#dashboard" class="nav-link">Dashboard</a>
+      <a href="#quickstart" class="nav-link">Quick Start</a><a href="#api" class="nav-link">API</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <a href="/cdn-cgi/l/email-protection#f48d9b9391879cc6c0cdb484869b809b9ada9991cb8781969e919780c9a79d939a9598b2989b83d4b5a4bdd4b59797918787" class="nav-cta">Request Access</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><div class="live-dot"></div> Real-time · 4 platforms · open API</div>
+  <h1 class="hero-title">SIGNAL<span>FLOW</span></h1>
+  <p class="hero-desc">
+    Cross-platform signal intelligence across Reddit, HackerNews, Bluesky and YouTube —
+    <b>sentiment, velocity and divergence</b> surfaced before topics hit mainstream media.
+  </p>
+
+  <div class="filter-row" id="filter-row">
+    <div class="filter-pill active" data-pf="all" onclick="setFilter('all',this)">All Platforms</div>
+    <div class="filter-pill" data-pf="reddit" onclick="setFilter('reddit',this)">Reddit</div>
+    <div class="filter-pill" data-pf="hackernews" onclick="setFilter('hackernews',this)">HackerNews</div>
+    <div class="filter-pill" data-pf="bluesky" onclick="setFilter('bluesky',this)">Bluesky</div>
+    <div class="filter-pill" data-pf="youtube" onclick="setFilter('youtube',this)">YouTube</div>
+    <div class="filter-pill" data-pf="cross" onclick="setFilter('cross',this)">Cross-Platform Only</div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Search topics..." oninput="filterTopics()">
+    </div>
+  </div>
+
+  <div style="max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+    <div style="display:flex;background:var(--bg3);padding:8px 20px;border-bottom:1px solid var(--border)">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">All Time</span>
+    </div>
+    <div style="display:flex">
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-total"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl">Total Signals</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-reddit"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--reddit)">Reddit</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-bluesky"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--bsky)">Bluesky</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-youtube"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--yt)">YouTube</div>
+      </div>
+      <div class="hkpi" style="flex:1">
+        <div class="hkpi-val" id="kpi-hn"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--hn)">HackerNews</div>
+      </div>
+    </div>
+    <div style="display:flex;background:var(--bg3);padding:8px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub)">Last 24 Hours</span>
+    </div>
+    <div style="display:flex">
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-24h-total"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl">Signals</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-24h-reddit"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--reddit)">Reddit</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-24h-bluesky"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--bsky)">Bluesky</div>
+      </div>
+      <div class="hkpi" style="flex:1;border-right:1px solid var(--border)">
+        <div class="hkpi-val" id="kpi-24h-youtube"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--yt)">YouTube</div>
+      </div>
+      <div class="hkpi" style="flex:1">
+        <div class="hkpi-val" id="kpi-24h-hn"><div class="skeleton skel-val"></div></div>
+        <div class="hkpi-lbl" style="color:var(--hn)">HackerNews</div>
+      </div>
+    </div>
+    <div style="display:flex;background:var(--bg3);padding:8px 20px 8px;border-top:1px solid var(--border)">
+      <div style="display:flex;gap:16px;align-items:center">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub)">Trending Now</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green)" id="kpi-topics-inline">— topics</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold)" id="kpi-cross-inline">— cross-platform</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub)">4 platforms</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDING TOPICS -->
+<section class="section" id="trending">
+  <div class="section-head">
+    <div class="section-title">Trending Topics</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="section-count" id="trend-ts"></span>
+      <span class="see-all" onclick="window.open('/api/v1/trending/?platform=all&window=60&limit=25')">View API ↗</span>
+    </div>
+  </div>
+  <div class="section-rule"></div>
+  <div class="topics-grid" id="topics-grid">
+    <div class="skel-card skeleton"></div>
+    <div class="skel-card skeleton"></div>
+    <div class="skel-card skeleton"></div>
+    <div class="skel-card skeleton"></div>
+    <div class="skel-card skeleton"></div>
+    <div class="skel-card skeleton"></div>
+  </div>
+</section>
+
+<!-- INTELLIGENCE -->
+<section class="section" id="intelligence" style="background:var(--bg2)">
+  <div class="section-head">
+    <div class="section-title">Topic Intelligence</div>
+    <span class="section-count">LLM-generated · updated every 15 min</span>
+  </div>
+  <div class="section-rule"></div>
+  <p style="font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:24px;max-width:700px">
+    For each trending topic, an LLM reads the top signals across all platforms and extracts the
+    <b style="color:var(--text);font-weight:400">dominant narrative</b>,
+    <b style="color:var(--text);font-weight:400">emerging counter-angle</b> and
+    <b style="color:var(--text);font-weight:400">platform divergence explanation</b> — automatically.
+  </p>
+  <div class="intel-grid" id="intel-grid">
+    <div class="skeleton skel-intel"></div>
+    <div class="skeleton skel-intel"></div>
+    <div class="skeleton skel-intel"></div>
+    <div class="skeleton skel-intel"></div>
+  </div>
+</section>
+
+<!-- CROSS-PLATFORM PROPAGATION -->
+<section class="section" id="propagation">
+  <div class="section-head">
+    <div class="section-title">Cross-Platform Propagation</div>
+    <span class="section-count" id="cross-count"></span>
+  </div>
+  <div class="section-rule"></div>
+  <p style="font-size:13px;color:var(--sub);margin-bottom:20px;line-height:1.7">
+    Topics that have broken containment — appearing on <b style="color:var(--text);font-weight:400">two or more platforms</b> within the same hour.
+    These are the signals that cross community boundaries before they hit mainstream media.
+  </p>
+  <div class="connected-grid" id="connected-grid">
+    <div class="skeleton" style="height:120px;border-radius:3px"></div>
+    <div class="skeleton" style="height:120px;border-radius:3px"></div>
+    <div class="skeleton" style="height:120px;border-radius:3px"></div>
+    <div class="skeleton" style="height:120px;border-radius:3px"></div>
+  </div>
+</section>
+
+<!-- GRAFANA DASHBOARD -->
+<section class="section" id="dashboard" style="background:var(--bg2)">
+  <div class="section-head">
+    <div class="section-title">Signal Intelligence Dashboard</div>
+    <span class="section-count">Topic traction · sentiment · cross-platform lead/lag</span>
+  </div>
+  <div class="section-rule"></div>
+  <p style="font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:20px;max-width:700px">
+    Live Grafana dashboard showing topic velocity over time, sentiment shifts and cross-platform lead/lag.
+    Each spike marks a moment a topic broke containment across platforms.
+  </p>
+  <div class="grafana-wrap">
+    <div class="grafana-bar">
+      <span class="grafana-title">SIGNALFLOW — TOPIC INTELLIGENCE</span>
+      <span class="grafana-badge">● LIVE · 1m refresh</span>
+    </div>
+    <div class="grafana-fallback" id="grafana-content">
+      <div class="grafana-fallback-icon">📊</div>
+      <div class="grafana-fallback-text">
+        Dashboard available at your Grafana instance<br>
+        <span style="color:var(--dim);font-size:10px">Add your Grafana embed URL below to display live charts</span>
+      </div>
+      <a href="#" onclick="openGrafana()" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);border:1px solid rgba(201,168,76,.3);padding:6px 14px;border-radius:2px;margin-top:8px">
+        Open Dashboard ↗
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORM STATS -->
+<section class="section" id="platforms">
+  <div class="section-head">
+    <div class="section-title">Data Sources</div>
+    <span class="section-count">4 platforms monitored</span>
+  </div>
+  <div class="section-rule"></div>
+  <div class="platform-grid" id="pf-grid">
+    <div class="pf-stat skeleton" style="min-height:120px"></div>
+    <div class="pf-stat skeleton" style="min-height:120px"></div>
+    <div class="pf-stat skeleton" style="min-height:120px"></div>
+    <div class="pf-stat skeleton" style="min-height:120px"></div>
+  </div>
+</section>
+
+<!-- API REFERENCE -->
+<section class="section" id="api">
+  <div class="section-head">
+    <div class="section-title">API Reference</div>
+    <span class="see-all" onclick="window.open('/api/v1/')">Browse API ↗</span>
+  </div>
+  <div class="section-rule"></div>
+  <div class="api-grid">
+    <div>
+      <p style="font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:20px">
+        REST API with live data. <b style="color:var(--text);font-weight:400">No auth required</b> for public endpoints.
+        Each response includes signal counts, sentiment, velocity, platform breakdown and LLM-generated intelligence.
+      </p>
+      <div class="endpoint-list" id="ep-list">
+        <div class="ep active" onclick="loadApiPreview('trending',this)">
+          <span class="ep-method">GET</span>
+          <span class="ep-path">/api/v1/trending/</span>
+          <span class="ep-desc">trending topics</span>
+        </div>
+        <div class="ep" onclick="loadApiPreview('pulse',this)">
+          <span class="ep-method">GET</span>
+          <span class="ep-path">/api/v1/pulse/?topic=</span>
+          <span class="ep-desc">topic intelligence</span>
+        </div>
+        <div class="ep" onclick="loadApiPreview('signals',this)">
+          <span class="ep-method">GET</span>
+          <span class="ep-path">/api/v1/signals/</span>
+          <span class="ep-desc">raw signal feed</span>
+        </div>
+        <div class="ep" onclick="loadApiPreview('stats',this)">
+          <span class="ep-method">GET</span>
+          <span class="ep-path">/api/v1/stats/</span>
+          <span class="ep-desc">pipeline stats</span>
+        </div>
+        <div class="ep" onclick="loadApiPreview('compare',this)">
+          <span class="ep-method">GET</span>
+          <span class="ep-path">/api/v1/compare/</span>
+          <span class="ep-desc">divergence events</span>
+        </div>
+      </div>
+      <div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:3px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--sub);margin-bottom:8px;text-transform:uppercase">Parameters</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);line-height:2">
+          <span style="color:var(--gold)">platform</span> = all | reddit | hackernews | bluesky | youtube<br>
+          <span style="color:var(--gold)">window_minutes</span> = 15 | 30 | 60 | 240<br>
+          <span style="color:var(--gold)">limit</span> = 1–100 (default 20)
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-lang" id="code-label">live · /api/v1/trending/</span>
+          <button class="code-copy" onclick="copyCode()">copy</button>
+        </div>
+        <div class="code-body" id="api-code"><span class="t-comment">// fetching live data...</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- QUICK START -->
+<section class="section" id="quickstart" style="background:var(--bg2)">
+  <div class="section-head">
+    <div class="section-title">Quick Start</div>
+    <span class="section-count">copy · paste · run</span>
+  </div>
+  <div class="section-rule"></div>
+
+  <!-- TAB SWITCHER -->
+  <div style="display:flex;gap:6px;margin-bottom:24px" id="qs-tabs">
+    <div class="qs-tab active" onclick="setQsTab('curl',this)">cURL</div>
+    <div class="qs-tab" onclick="setQsTab('python',this)">Python</div>
+    <div class="qs-tab" onclick="setQsTab('js',this)">JavaScript</div>
+    <div class="qs-tab" onclick="setQsTab('node',this)">Node.js</div>
+  </div>
+
+  <!-- STEP CARDS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <!-- STEP 1 -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">① Get your key</div>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-lang" id="qs-key-label">bash</span>
+          <button class="code-copy" onclick="copyQs('qs-key-body')">copy</button>
+        </div>
+        <div class="code-body" id="qs-key-body" style="min-height:auto"></div>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:8px">② Trending topics</div>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-lang" id="qs-trending-label">bash</span>
+          <button class="code-copy" onclick="copyQs('qs-trending-body')">copy</button>
+        </div>
+        <div class="code-body" id="qs-trending-body" style="min-height:auto"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">③ Topic intelligence (pulse)</div>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-lang" id="qs-pulse-label">bash</span>
+          <button class="code-copy" onclick="copyQs('qs-pulse-body')">copy</button>
+        </div>
+        <div class="code-body" id="qs-pulse-body" style="min-height:auto"></div>
+      </div>
+
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:8px">④ Response shape</div>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-lang">json · pulse response</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green)">● live</span>
+        </div>
+        <div class="code-body" style="min-height:auto;font-size:10px;line-height:1.7">
+<span class="t-key">{</span>
+  <span class="t-key">"topic"</span>: <span class="t-str">"iran"</span>,
+  <span class="t-key">"overall_sentiment"</span>: <span class="t-num">-0.49</span>,
+  <span class="t-key">"signal_count"</span>: <span class="t-num">574</span>,
+  <span class="t-key">"divergence"</span>: <span class="t-key">{</span>
+    <span class="t-key">"score"</span>: <span class="t-num">0.44</span>,
+    <span class="t-key">"alert"</span>: <span class="t-bool">true</span>
+  <span class="t-key">}</span>,
+  <span class="t-key">"intelligence"</span>: <span class="t-key">{</span>
+    <span class="t-key">"summary"</span>: <span class="t-str">"People discussing..."</span>,
+    <span class="t-key">"dominant_narrative"</span>: <span class="t-str">"US strikes on Kharg Island..."</span>,
+    <span class="t-key">"emerging_angle"</span>: <span class="t-str">"Diplomatic back-channel..."</span>,
+    <span class="t-key">"divergence_explanation"</span>: <span class="t-str">"Reddit focuses on..."</span>
+  <span class="t-key">}</span>
+<span class="t-key">}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RATE LIMITS TABLE -->
+  <div style="margin-top:28px;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;background:var(--bg3);border-bottom:1px solid var(--border)">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Endpoint</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Auth</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Rate Limit</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">Returns</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">/api/v1/trending/</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)">Optional</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)">100/min</div>
+      <div style="padding:10px 16px;font-size:11px;color:var(--sub)">Ranked topic list</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">/api/v1/pulse/</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)">Optional</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)">100/min</div>
+      <div style="padding:10px 16px;font-size:11px;color:var(--sub)">Topic + intelligence</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">/api/v1/signals/</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)">Optional</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)">100/min</div>
+      <div style="padding:10px 16px;font-size:11px;color:var(--sub)">Raw signal feed</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">/api/v1/compare/</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)">Optional</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)">100/min</div>
+      <div style="padding:10px 16px;font-size:11px;color:var(--sub)">Divergence events</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr">
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">/api/v1/stats/totals/</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)">Optional</div>
+      <div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)">100/min</div>
+      <div style="padding:10px 16px;font-size:11px;color:var(--sub)">Platform totals</div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-head"><div class="section-title">Frequently Asked Questions</div></div>
+  <div class="section-rule"></div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q">What is SignalFlow?</div>
+      <div class="faq-a">A real-time cross-platform signal intelligence system monitoring Reddit, HackerNews, Bluesky and YouTube simultaneously. It detects when topics emerge and propagate across communities — often before mainstream media coverage.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What is the intelligence block?</div>
+      <div class="faq-a">Every 15 minutes, an LLM reads the top signals for each trending topic and generates a 3-sentence summary, identifies the dominant narrative and emerging counter-narrative, and explains why platform sentiment diverges. This runs outside the hot path — ingestion is never delayed.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What does cross-platform mean?</div>
+      <div class="faq-a">A topic appearing on two or more platforms within the same window. Significant because it indicates a topic is escaping its origin community — a reliable early signal of mainstream breakout.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How is the trend score calculated?</div>
+      <div class="faq-a">Each signal gets a score derived from velocity (points per second), comment velocity, baseline comparison and sentiment weight. Scores are normalised across platforms so a Bluesky post and Reddit thread are directly comparable.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How do I access the API?</div>
+      <div class="faq-a">Publicly accessible at signalflo.xyz/api/v1/ with no authentication required. For higher rate limits or webhook access, contact us.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2 class="cta-title">Social signals, <em>before they peak.</em></h2>
+  <p class="cta-sub">Open API. Real data. Updated every 30 seconds.</p>
+  <div class="cta-actions">
+    <a href="#" onclick="openModal();return false;" class="btn-gold">Get API Key -></a>
+  </div>
+</section>
+
+<footer>
+  <div>
+    <div class="footer-brand">SIGNALFLOW</div>
+    <div class="footer-note">Cross-platform signal intelligence. Monitoring Reddit, HackerNews, Bluesky and YouTube in real time.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-top:12px" id="footer-clock"></div>
+  </div>
+  <div>
+    <div class="footer-col-title">API</div>
+    <div class="footer-links">
+      <a href="/api/v1/trending/?platform=all&window_minutes=60" target="_blank" class="footer-link">Trending</a>
+      <a href="/api/v1/pulse/?topic=iran" target="_blank" class="footer-link">Pulse</a>
+      <a href="/api/v1/stats/" target="_blank" class="footer-link">Stats</a>
+      <a href="/api/v1/compare/" target="_blank" class="footer-link">Compare</a>
+    </div>
+  </div>
+  <div>
+    <div class="footer-col-title">Contact</div>
+    <div class="footer-links">
+      <a href="/cdn-cgi/l/email-protection#85fceae2e0f6edb7b1bcc5f5f7eaf1eaebabe8e0" class="footer-link"><span class="__cf_email__" data-cfemail="d4adbbb3b1a7bce6e0ed94a4a6bba0bbbafab9b1">[email&#160;protected]</span></a>
+      <a href="#faq" class="footer-link">FAQ</a>
+      <a href="https://github.com/Yogesh249S/Signalflow" target="_blank" class="footer-link">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+var PFC={reddit:'var(--reddit)',hackernews:'var(--hn)',bluesky:'var(--bsky)',youtube:'var(--yt)'};
+var PFS={reddit:'RDT',hackernews:'HN',bluesky:'BSK',youtube:'YT'};
+var PFBG={reddit:'fc-badge-reddit',hackernews:'fc-badge-hackernews',bluesky:'fc-badge-bluesky',youtube:'fc-badge-youtube'};
+var allTopics=[];
+var activeFilter='all';
+var currentTrendingTopic='iran';
+
+// -- GRAFANA --
+// Replace this URL with your actual Grafana embed URL
+// In Grafana: open dashboard -> Share -> Embed -> copy the src URL
+var GRAFANA_URL = 'https://signalflo.xyz/grafana/d/signalflow-topics/signalflow-topic-intelligence?orgId=1&kiosk&refresh=30s';  // e.g. 'http://your-server-ip:3000/d/xxx/signalflow?orgId=1&kiosk'
+function openGrafana(){
+  if(GRAFANA_URL) window.open(GRAFANA_URL,'_blank');
+  else alert('Set GRAFANA_URL in the page script to enable the live dashboard link.');
+}
+function initGrafana(){
+  if(!GRAFANA_URL) return;
+  var wrap = document.getElementById('grafana-content');
+  wrap.innerHTML = '<iframe class="grafana-frame" src="'+GRAFANA_URL+'" frameborder="0" allowfullscreen></iframe>';
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function ago(iso){var d=(Date.now()-new Date(iso))/1000;if(d<60)return Math.round(d)+'s ago';if(d<3600)return Math.round(d/60)+'m ago';return Math.round(d/3600)+'h ago'}
+function fmtNum(n){if(!n&&n!==0)return'--';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return String(n)}
+
+// clock
+function updateClock(){var el=document.getElementById('footer-clock');if(el)el.textContent=new Date().toISOString().replace('T',' ').slice(0,19)+' UTC'}
+setInterval(updateClock,1000);updateClock();
+
+// filter
+function setFilterByPlatform(pf){
+  var pills=document.querySelectorAll('.filter-pill');
+  pills.forEach(function(p){
+    p.classList.remove('active');
+    if(p.getAttribute('data-pf')===pf) p.classList.add('active');
+  });
+  activeFilter=pf;
+  renderTopics(allTopics);
+  // scroll to trending section
+  var el=document.getElementById('trending');
+  if(el) el.scrollIntoView({behavior:'smooth'});
+}
+function setFilter(pf,el){
+  activeFilter=pf;
+  document.querySelectorAll('.filter-pill').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+  renderTopics(allTopics);
+}
+function filterTopics(){renderTopics(allTopics)}
+function getFilteredTopics(topics){
+  var q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  return topics.filter(function(t){
+    if(activeFilter==='cross') return t.cross_platform;
+    if(activeFilter!=='all') return (t.platforms||[]).indexOf(activeFilter)>=0;
+    return true;
+  }).filter(function(t){
+    if(!q) return true;
+    return t.topic.toLowerCase().indexOf(q)>=0;
+  });
+}
+
+// -- RENDER TRENDING --
+function renderTopics(topics){
+  allTopics=topics;
+  var filtered=getFilteredTopics(topics);
+  var grid=document.getElementById('topics-grid');
+  if(!filtered.length){grid.innerHTML='<div style="padding:40px;color:var(--sub);font-family:\'JetBrains Mono\',monospace;font-size:11px">no topics match filter</div>';return}
+  var max=filtered[0].trend_score||1;
+  grid.style.opacity='0';grid.style.transition='opacity .3s';grid.innerHTML=filtered.slice(0,24).map(function(t){
+    var pct=((t.trend_score/max)*100).toFixed(1);
+    var dots=(t.platforms||[]).map(function(p){
+      return'<span class="tc-pf" style="background:rgba(0,0,0,.2);color:'+(PFC[p]||'#888')+'">'+( PFS[p]||p )+'</span>';
+    }).join('');
+    var s=t.avg_sentiment||0;
+    var sc=s>0.05?'var(--green)':s<-0.05?'var(--red)':'var(--sub)';
+    var barCol=t.cross_platform?'var(--gold)':'var(--dim)';
+    return'<div class="topic-card"><div class="tc-top"><div class="tc-name">'+esc(t.topic)+'</div><div class="tc-score">'+Math.round(t.trend_score)+'</div></div><div class="tc-meta"><span class="tc-chip '+(t.cross_platform?'tc-cross':'tc-single')+'">'+(t.cross_platform?'* CROSS-PLATFORM':'SINGLE')+'</span><span class="tc-chip tc-single">'+t.signal_count+' signals</span></div><div class="tc-bar-w"><div class="tc-bar" style="width:'+pct+'%;background:'+barCol+'"></div></div><div class="tc-platforms">'+dots+'</div><div class="tc-sent" style="color:'+sc+'">'+(s>0?'+':'')+s.toFixed(3)+' sentiment</div></div>';
+  }).join('');
+requestAnimationFrame(function(){grid.style.opacity='1';});
+}
+
+// -- RENDER PROPAGATION --
+function renderPropagation(topics){
+  var cross=topics.filter(function(t){return t.cross_platform&&(t.platforms||[]).length>=2});
+  var el=document.getElementById('connected-grid');
+  var _cc=document.getElementById('cross-count');if(_cc)_cc.textContent=cross.length+' active events';
+  var _kc=document.getElementById('kpi-cross');if(_kc)_kc.textContent=cross.length;
+  var ci=document.getElementById('kpi-cross-inline');
+  if(ci) ci.textContent=cross.length+' cross-platform';
+  if(!cross.length){el.innerHTML='<div style="padding:20px;color:var(--sub);font-family:\'JetBrains Mono\',monospace;font-size:11px">no cross-platform events</div>';return}
+  el.innerHTML=cross.slice(0,12).map(function(t){
+    var pfs=t.platforms||[];
+    var dots=pfs.map(function(p){return'<span class="tc-pf" style="background:rgba(0,0,0,.2);color:'+(PFC[p]||'#888')+'">'+( PFS[p]||p )+'</span>'}).join('');
+    var hl=((t.sample_signals||[]).find(function(s){return s.title&&s.title.trim()})||{}).title||'';
+    return'<div class="conn-card"><div class="conn-name">'+esc(t.topic)+'</div><div class="conn-badge">'+pfs.length+' platforms</div><div class="conn-platforms">'+dots+'</div>'+(hl?'<div style="font-size:11px;color:var(--sub);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:6px">'+esc(hl)+'</div>':'')+'<div class="conn-stat" style="margin-top:8px">'+t.signal_count+' signals</div></div>';
+  }).join('');
+}
+
+// -- RENDER PLATFORM STATS (live from stats endpoint) --
+function renderPlatforms(topics){
+  var byPf={};
+  topics.forEach(function(t){(t.platforms||[]).forEach(function(p){byPf[p]=(byPf[p]||0)+1})});
+  var pfs=['reddit','hackernews','bluesky','youtube'];
+  var colors={reddit:'var(--reddit)',hackernews:'var(--hn)',bluesky:'var(--bsky)',youtube:'var(--yt)'};
+  document.getElementById('pf-grid').innerHTML=pfs.map(function(p){
+    var cnt=byPf[p]||0;
+    var top=(topics.find(function(t){return(t.platforms||[]).indexOf(p)>=0})||{}).topic||'--';
+    var pct=Math.min(100,cnt*4);
+    return'<div class="pf-stat" onclick="setFilterByPlatform(\"'+p+'\")" style="cursor:pointer"><div class="pf-name" style="color:'+colors[p]+'">'+p+'</div><div class="pf-num" id="pf-total-'+p+'">--</div><div class="pf-rate" id="pf-rate-'+p+'">loading...</div><div class="pf-top-topic">&#8593; '+esc(top)+'</div><div class="pf-bar-w"><div class="pf-bar" style="width:'+pct+'%;background:'+colors[p]+'"></div></div></div>';
+  }).join('');
+}
+
+// -- INTELLIGENCE CARDS --
+function renderIntelligence(topics){
+  var crossTopics=topics.filter(function(t){return t.cross_platform}).slice(0,4);
+  if(!crossTopics.length) crossTopics=topics.slice(0,4);
+  var grid=document.getElementById('intel-grid');
+  grid.innerHTML='<div class="intel-loading">fetching intelligence...</div>';
+
+  var fetched=0;
+  var cards=[];
+  crossTopics.forEach(function(t,i){
+    fetch('/api/v1/pulse/?topic='+encodeURIComponent(t.topic),{headers:{Accept:'application/json'}})
+      .then(function(r){return r.json()})
+      .then(function(data){
+        cards[i]=renderIntelCard(t.topic,data);
+        fetched++;
+        if(fetched===crossTopics.length){
+          grid.innerHTML=cards.filter(Boolean).join('')||'<div class="intel-loading">no intelligence available yet</div>';
+        }
+      }).catch(function(){
+        fetched++;
+        if(fetched===crossTopics.length && cards.filter(Boolean).length){
+          grid.innerHTML=cards.filter(Boolean).join('');
+        }
+      });
+  });
+}
+
+function renderIntelCard(topic,data){
+  var intel=data.intelligence;
+  if(!intel||!intel.summary) return null;
+  var s=data.overall_sentiment||0;
+  var sc=s>0.05?'var(--green)':s<-0.05?'var(--red)':'var(--sub)';
+  var age=intel.generated_at?ago(intel.generated_at):'--';
+  var pfs=(Object.keys(data.platforms||{})).map(function(p){
+    return'<span class="tc-pf" style="background:rgba(0,0,0,.2);color:'+(PFC[p]||'#888')+'">'+( PFS[p]||p )+'</span>';
+  }).join('');
+  var divBlock=intel.divergence_explanation
+    ?'<div class="intel-diverg"><div class="intel-diverg-label">* Platform Divergence</div><div class="intel-diverg-text">'+esc(intel.divergence_explanation)+'</div></div>'
+    :'';
+  return '<div class="intel-card">'
+    +'<div class="intel-head">'
+      +'<div class="intel-topic">'+esc(topic)+'</div>'
+      +'<div class="intel-meta">'
+        +'<span class="intel-sent" style="color:'+sc+'">'+(s>0?'+':'')+s.toFixed(2)+'</span>'
+        +'<span class="intel-age">'+age+'</span>'
+      +'</div>'
+    +'</div>'
+    +'<div class="intel-body">'
+      +'<div class="intel-row"><div class="intel-row-label">Summary</div><div class="intel-row-text">'+esc(intel.summary)+'</div></div>'
+      +(intel.dominant_narrative?'<div class="intel-row"><div class="intel-row-label">Dominant Narrative</div><div class="intel-row-text">'+esc(intel.dominant_narrative)+'</div></div>':'')
+      +(intel.emerging_angle?'<div class="intel-row"><div class="intel-row-label">Emerging Angle</div><div class="intel-row-text dim">'+esc(intel.emerging_angle)+'</div></div>':'')
+      +divBlock
+      +'<div class="intel-platforms">'+pfs+'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--dim);margin-left:4px">'+data.signal_count+' signals</span></div>'
+    +'</div>'
+  +'</div>';
+}
+
+// -- API PREVIEW --
+var API_ENDPOINTS={
+  trending:{url:'/api/v1/trending/?platform=all&window_minutes=240&limit=5',label:'live . /api/v1/trending/'},
+  pulse:{url:'/api/v1/pulse/?topic=iran',label:'live . /api/v1/pulse/?topic=iran'},
+  signals:{url:'/api/v1/signals/?limit=3&ordering=-first_seen_at',label:'live . /api/v1/signals/'},
+  stats:{url:'/api/v1/stats/',label:'live . /api/v1/stats/'},
+  compare:{url:'/api/v1/compare/',label:'live . /api/v1/compare/'}
+};
+
+function loadApiPreview(key,el){
+  document.querySelectorAll('.ep').forEach(function(e){e.classList.remove('active')});
+  if(el) el.classList.add('active');
+  var ep=API_ENDPOINTS[key];
+  document.getElementById('code-label').textContent=ep.label;
+  document.getElementById('api-code').innerHTML='<span class="t-comment">// fetching...</span>';
+  fetch(ep.url,{headers:{Accept:'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(data){
+      document.getElementById('api-code').innerHTML=jsonToHtml(data,0);
+    }).catch(function(e){
+      document.getElementById('api-code').innerHTML='<span class="t-comment">// error: '+esc(String(e))+'</span>';
+    });
+}
+
+function jsonToHtml(obj,depth){
+  if(depth>3) return '<span class="t-comment">...</span>';
+  if(obj===null) return '<span class="t-null">null</span>';
+  if(typeof obj==='boolean') return '<span class="t-bool">'+obj+'</span>';
+  if(typeof obj==='number') return '<span class="t-num">'+obj+'</span>';
+  if(typeof obj==='string'){
+    var s=obj.length>120?obj.slice(0,120)+'...':obj;
+    return'<span class="t-str">"'+esc(s)+'"</span>';
+  }
+  if(Array.isArray(obj)){
+    if(!obj.length) return'<span class="t-key">[]</span>';
+    var items=obj.slice(0,3).map(function(v){return pad(depth+1)+jsonToHtml(v,depth+1)});
+    if(obj.length>3) items.push(pad(depth+1)+'<span class="t-comment">// +'+( obj.length-3)+' more</span>');
+    return'<span class="t-key">[</span>\n'+items.join(',\n')+'\n'+pad(depth)+'<span class="t-key">]</span>';
+  }
+  if(typeof obj==='object'){
+    var keys=Object.keys(obj).slice(0,12);
+    var pairs=keys.map(function(k){
+      return pad(depth+1)+'<span class="t-key">"'+esc(k)+'"</span>: '+jsonToHtml(obj[k],depth+1);
+    });
+    if(Object.keys(obj).length>12) pairs.push(pad(depth+1)+'<span class="t-comment">// +more fields</span>');
+    return'<span class="t-key">{</span>\n'+pairs.join(',\n')+'\n'+pad(depth)+'<span class="t-key">}</span>';
+  }
+  return esc(String(obj));
+}
+function pad(d){return '  '.repeat(d)}
+
+function copyCode(){
+  var el=document.getElementById('api-code');
+  if(el) navigator.clipboard.writeText(el.innerText).then(function(){
+    var btn=document.querySelector('.code-copy');
+    if(btn){btn.textContent='copied!';setTimeout(function(){btn.textContent='copy'},1500)}
+  });
+}
+
+// -- LOAD STATS FOR PLATFORM TOTALS --
+function loadStats(){
+  fetch('/api/v1/stats/totals/',{headers:{Accept:'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      var a=d.all_time, h=d.last_24h;
+      // all-time row
+      // replace skeleton with real value + fade in
+      function setKpi(id, val){
+        var el=document.getElementById(id);
+        if(!el) return;
+        el.style.opacity='0';
+        el.style.transition='opacity .3s';
+        el.textContent=fmtNum(val);
+        requestAnimationFrame(function(){el.style.opacity='1';});
+      }
+      setKpi('kpi-total',a.total);
+      setKpi('kpi-reddit',a.reddit);
+      setKpi('kpi-bluesky',a.bluesky);
+      setKpi('kpi-youtube',a.youtube);
+      setKpi('kpi-hn',a.hackernews);
+      setKpi('kpi-24h-total',h.total);
+      setKpi('kpi-24h-reddit',h.reddit);
+      setKpi('kpi-24h-bluesky',h.bluesky);
+      setKpi('kpi-24h-youtube',h.youtube);
+      setKpi('kpi-24h-hn',h.hackernews);
+      // update platform stat cells
+      var pTotals={reddit:fmtNum(a.reddit),hackernews:fmtNum(a.hackernews),youtube:fmtNum(a.youtube),bluesky:fmtNum(a.bluesky)};
+      var p24={reddit:fmtNum(h.reddit),hackernews:fmtNum(h.hackernews),youtube:fmtNum(h.youtube),bluesky:fmtNum(h.bluesky)};
+      Object.keys(pTotals).forEach(function(p){
+        var el=document.getElementById('pf-total-'+p);
+        if(el) el.textContent=pTotals[p];
+        var er=document.getElementById('pf-rate-'+p);
+        if(er) er.textContent=p24[p]+' / 24h';
+      });
+    }).catch(function(e){console.warn('stats/totals:',e)});
+}
+
+// -- MAIN LOAD --
+function loadTrending(){
+  fetch('/api/v1/trending/?platform=all&window_minutes=240&limit=25',{headers:{Accept:'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(data){
+      var topics=data.topics||[];
+      var _kt=document.getElementById('kpi-topics');if(_kt)_kt.textContent=topics.length;
+      var ti=document.getElementById('kpi-topics-inline');
+      if(ti) ti.textContent=topics.length+' topics';
+      var _tt=document.getElementById('trend-ts');if(_tt)_tt.textContent=(data.generated_at||'').slice(11,19)+'z';
+      renderTopics(topics);
+      renderPropagation(topics);
+      renderPlatforms(topics);
+      renderIntelligence(topics);
+      // set pulse topic to top trending
+      if(topics.length){
+        currentTrendingTopic=topics[0].topic;
+        API_ENDPOINTS.pulse.url='/api/v1/pulse/?topic='+encodeURIComponent(currentTrendingTopic);
+        API_ENDPOINTS.pulse.label='live . /api/v1/pulse/?topic='+currentTrendingTopic;
+      }
+    }).catch(function(e){console.warn('trending:',e)});
+}
+
+// -- API ACCESS MODAL --
+function openModal(){
+  document.getElementById('access-modal').classList.add('open');
+  document.getElementById('modal-form-state').style.display='block';
+  document.getElementById('modal-key-state').classList.remove('show');
+  document.getElementById('access-name').focus();
+}
+function closeModal(){
+  document.getElementById('access-modal').classList.remove('open');
+}
+function closeModalOutside(e){
+  if(e.target===document.getElementById('access-modal')) closeModal();
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') closeModal();
+});
+
+function submitAccessRequest(){
+  var name  = document.getElementById('access-name').value.trim();
+  var email = document.getElementById('access-email').value.trim();
+  var errEl = document.getElementById('form-error');
+  var btn   = document.getElementById('submit-btn');
+
+  errEl.style.display='none';
+
+  if(!name){
+    errEl.textContent='Name is required.';
+    errEl.style.display='block';
+    return;
+  }
+  if(!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)){
+    errEl.textContent='Please enter a valid email address.';
+    errEl.style.display='block';
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent='Generating...';
+
+  fetch('/api/v1/access/request/',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({name:name,email:email})
+  })
+  .then(function(r){return r.json()})
+  .then(function(d){
+    if(d.token){
+      document.getElementById('key-display').textContent=d.token;
+      document.getElementById('modal-form-state').style.display='none';
+      document.getElementById('modal-key-state').classList.add('show');
+    } else {
+      errEl.textContent=d.error||'Something went wrong. Please try again.';
+      errEl.style.display='block';
+      btn.disabled=false;
+      btn.textContent='Generate API Key ->';
+    }
+  })
+  .catch(function(){
+    errEl.textContent='Network error. Please try again.';
+    errEl.style.display='block';
+    btn.disabled=false;
+    btn.textContent='Generate API Key ->';
+  });
+}
+
+function copyApiKey(){
+  var key=document.getElementById('key-display').textContent;
+  navigator.clipboard.writeText(key).then(function(){
+    var btn=document.querySelector('.key-copy-btn');
+    btn.textContent='COPIED OK';
+    setTimeout(function(){btn.textContent='COPY KEY'},2000);
+  });
+}
+
+function getCookie(name){
+  var v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)');
+  return v?v[2]:null;
+}
+
+// -- QUICK START CODE EXAMPLES --
+var QS_EXAMPLES = {
+  curl: {
+    label: 'bash',
+    key: 'curl -s -X POST "https://signalflo.xyz/api/v1/access/request/" -H "Content-Type: application/json" -d \'{"name":"Test","email":"you@example.com"}\'',
+    trending: 'curl "https://signalflo.xyz/api/v1/trending/?window=60&limit=10" \\\n  -H "Authorization: Token YOUR_KEY"',
+    pulse: 'curl "https://signalflo.xyz/api/v1/pulse/?topic=iran" \\\n  -H "Authorization: Token YOUR_KEY"',
+  },
+  python: {
+    label: 'python',
+    key: 'import requests\n\nr = requests.post(\n    "https://signalflo.xyz/api/v1/access/request/",\n    json={"name": "Your Name", "email": "you@example.com"}\n)\nTOKEN = r.json()["token"]\nprint("Your key:", TOKEN)',
+    trending: 'import requests\n\nHEADERS = {"Authorization": f"Token {TOKEN}"}\nBASE = "https://signalflo.xyz/api/v1"\n\n# get trending topics\ntopics = requests.get(\n    f"{BASE}/trending/",\n    params={"window": 60, "limit": 10},\n    headers=HEADERS\n).json()\n\nfor t in topics["topics"]:\n    print(t["topic"], t["trend_score"])',
+    pulse: 'import requests\n\nHEADERS = {"Authorization": f"Token {TOKEN}"}\nBASE = "https://signalflo.xyz/api/v1"\n\n# get full intelligence for a topic\npulse = requests.get(\n    f"{BASE}/pulse/",\n    params={"topic": "iran"},\n    headers=HEADERS\n).json()\n\nintel = pulse["intelligence"]\nif intel:\n    print(intel["summary"])\n    print(intel["dominant_narrative"])\n    print(intel["divergence_explanation"])',
+  },
+  js: {
+    label: 'javascript',
+    key: 'const res = await fetch("https://signalflo.xyz/api/v1/access/request/", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify({name: "Your Name", email: "you@example.com"})\n});\nconst {token} = await res.json();\nconsole.log("Your key:", token);',
+    trending: 'const TOKEN = "YOUR_KEY_HERE";\nconst BASE = "https://signalflo.xyz/api/v1";\nconst HEADERS = {"Authorization": `Token ${TOKEN}`};\n\n// trending topics\nconst {topics} = await fetch(\n  `${BASE}/trending/?window=60&limit=10`,\n  {headers: HEADERS}\n).then(r => r.json());\n\ntopics.forEach(t => console.log(t.topic, t.trend_score));',
+    pulse: 'const TOKEN = "YOUR_KEY_HERE";\nconst BASE = "https://signalflo.xyz/api/v1";\nconst HEADERS = {"Authorization": `Token ${TOKEN}`};\n\n// topic intelligence\nconst data = await fetch(\n  `${BASE}/pulse/?topic=iran`,\n  {headers: HEADERS}\n).then(r => r.json());\n\nconst {intelligence} = data;\nif (intelligence) {\n  console.log(intelligence.summary);\n  console.log(intelligence.dominant_narrative);\n}',
+  },
+  node: {
+    label: 'node.js',
+    key: 'const fetch = require("node-fetch"); // npm install node-fetch\n\nconst res = await fetch("https://signalflo.xyz/api/v1/access/request/", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify({name: "Your Name", email: "you@example.com"})\n});\nconst {token} = await res.json();',
+    trending: 'const fetch = require("node-fetch");\nconst TOKEN = "YOUR_KEY_HERE";\nconst HEADERS = {"Authorization": `Token ${TOKEN}`};\n\nconst res = await fetch(\n  "https://signalflo.xyz/api/v1/trending/?window=60&limit=10",\n  {headers: HEADERS}\n);\nconst {topics} = await res.json();\ntopics.forEach(t => console.log(t.topic, t.trend_score));',
+    pulse: 'const fetch = require("node-fetch");\nconst TOKEN = "YOUR_KEY_HERE";\nconst HEADERS = {"Authorization": `Token ${TOKEN}`};\n\nconst res = await fetch(\n  "https://signalflo.xyz/api/v1/pulse/?topic=iran",\n  {headers: HEADERS}\n);\nconst {intelligence} = await res.json();\nif (intelligence) console.log(intelligence.summary);',
+  }
+};
+
+function esc_code(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderQsTab(key){
+  var ex = QS_EXAMPLES[key];
+  if(!ex) return;
+  document.getElementById('qs-key-label').textContent = ex.label;
+  document.getElementById('qs-trending-label').textContent = ex.label;
+  document.getElementById('qs-pulse-label').textContent = ex.label;
+  document.getElementById('qs-key-body').innerHTML = '<pre style="margin:0;white-space:pre-wrap">'+esc_code(ex.key)+'</pre>';
+  document.getElementById('qs-trending-body').innerHTML = '<pre style="margin:0;white-space:pre-wrap">'+esc_code(ex.trending)+'</pre>';
+  document.getElementById('qs-pulse-body').innerHTML = '<pre style="margin:0;white-space:pre-wrap">'+esc_code(ex.pulse)+'</pre>';
+}
+
+function setQsTab(key, el){
+  document.querySelectorAll('.qs-tab').forEach(function(t){t.classList.remove('active')});
+  el.classList.add('active');
+  renderQsTab(key);
+}
+
+function copyQs(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText).then(function(){
+    var btn = el.previousElementSibling.querySelector('.code-copy');
+    if(btn){btn.textContent='copied!';setTimeout(function(){btn.textContent='copy'},1500);}
+  });
+}
+
+// -- INIT --
+renderQsTab('curl');
+loadTrending();
+loadStats();
+loadApiPreview('trending', document.querySelector('.ep.active'));
+initGrafana();
+setInterval(loadTrending, 60000);
+setInterval(loadStats, 300000);
+</script>
+
+<!-- API ACCESS MODAL -->
+<div class="modal-overlay" id="access-modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- FORM STATE -->
+    <div id="modal-form-state">
+      <div class="modal-title">Get API Access</div>
+      <div class="modal-sub">
+        Free tier · <b>No credit card</b> · Key generated instantly.<br>
+        100 requests/minute · All endpoints included.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="access-name" type="text" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="access-email" type="email" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="form-error" id="form-error"></div>
+      <button class="btn-submit" id="submit-btn" onclick="submitAccessRequest()">
+        Generate API Key →
+      </button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);text-align:center;margin-top:14px;line-height:1.6">
+        By requesting a key you agree not to resell or redistribute<br>
+        SignalFlow data or API access.
+      </div>
+    </div>
+
+    <!-- KEY REVEAL STATE -->
+    <div class="key-reveal" id="modal-key-state">
+      <div style="font-size:28px;margin-bottom:12px">✦</div>
+      <div class="modal-title" style="font-size:20px">Your API Key</div>
+      <div class="modal-sub" style="margin-bottom:0">
+        Copy and store this key — it won't be shown again.
+      </div>
+      <div class="key-box" id="key-display">—</div>
+      <button class="key-copy-btn" onclick="copyApiKey()">COPY KEY</button>
+      <div class="key-limits">
+        <div class="key-limit-item">
+          <span class="key-limit-val">100</span>
+          <span class="key-limit-lbl">req / min</span>
+        </div>
+        <div class="key-limit-item">
+          <span class="key-limit-val">Free</span>
+          <span class="key-limit-lbl">forever</span>
+        </div>
+      </div>
+      <div class="key-warning">
+        Use as: <span style="color:var(--gold)">Authorization: Token YOUR_KEY</span><br>
+        Docs: <a href="/api/v1/" target="_blank" style="color:var(--gold)">signalflo.xyz/api/v1/</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
